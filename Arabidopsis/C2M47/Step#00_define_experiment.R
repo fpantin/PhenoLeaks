@@ -36,7 +36,9 @@ for (pkg in c("igraph"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-dir_PhenoLeaks <- file.path(dirname(getwd()), "PhenoLeaks")
+# Note that the working directory is expected to be the one of the PhenoLeaks project directory,
+# e.g. in RStudio: Session > Set Working Directory > To Project Directory
+dir_PhenoLeaks <- file.path(getwd(), "_core")
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
 
 
@@ -180,7 +182,7 @@ c(ColorsTrt, ColorsPeriod) := set_colors_C2M47()
 #------------------------------------------------------------------------------#
 
 # Import and manage irrigation data
-irrig <- read.csv(file.path(getwd(), "Processed_data", "C2M47_starch_irrigations.csv"))
+irrig <- read.csv(file.path(getwd(), "Arabidopsis", idExp, "Processed_data", "C2M47_starch_irrigations.csv"))
 irrig$idPot <- sub("C2M47-", "", irrig$idPotManip) ################
 irrig <- irrig[order(irrig$idPot, irrig$decimalDay), ]
 
