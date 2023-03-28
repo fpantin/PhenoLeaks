@@ -35,7 +35,9 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-dir_PhenoLeaks <- file.path(dirname(getwd()), "PhenoLeaks")
+# Note that the working directory is expected to be the one of the PhenoLeaks project directory,
+# e.g. in RStudio: Session > Set Working Directory > To Project Directory
+dir_PhenoLeaks <- file.path(getwd(), "_core")
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_graphics.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_fit.R"))
@@ -49,7 +51,7 @@ source(file.path(dir_PhenoLeaks, "PhenoLeaks_fit.R"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-source(file.path(getwd(), "Step#00_define_experiment.R"))
+source(file.path(getwd(), "Arabidopsis", idExp, "Step#00_define_experiment.R"))
 
 # To check the constants, run:
 #set_constants_C2M47()
@@ -72,7 +74,7 @@ source(file.path(getwd(), "Step#00_define_experiment.R"))
 #------------------------------------------------------------------------------#
 
 # Import corrected transpiration data
-df <- read.csv(file.path(getwd(), "Corrected_data", "E_corr.csv"))
+df <- read.csv(file.path(getwd(), "Arabidopsis", idExp, "Corrected_data", "E_corr.csv"))
 
 # Keep only the time interval that will be used for fitting
 df <- df[df$Time >= Time_start_exp, ]
@@ -98,7 +100,7 @@ results_fit <- run_fit(df,
                        remove_mode = "day_or_night") # allows including the first night period while discarding the first day period (incomplete)
 
 # Plot the fits
-pdf(file.path(getwd(), "Figures", paste(idExp, "Step#04a_fit_all_pots.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#04a_fit_all_pots.pdf", sep = "_")), width = 8, height = 5)
 for (irr in c("WW", "WS"))
   {
   for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
@@ -130,7 +132,8 @@ for (irr in c("WW", "WS"))
 dev.off()
 
 # Save the results
-write.csv(results_fit, file.path(getwd(), "Fitted_data", "results_fit.csv"), row.names = F)
+if (!dir.exists(file.path(getwd(), "Arabidopsis", idExp, "Fitted_data"))) { dir.create(file.path(getwd(), "Arabidopsis", idExp, "Fitted_data")) }
+write.csv(results_fit, file.path(getwd(), "Arabidopsis", idExp, "Fitted_data", "results_fit.csv"), row.names = F)
 
 
 #------------------------------------------------------------------------------#
@@ -149,7 +152,7 @@ results_fit_use_VPD <- run_fit(df,
                                remove_mode = "day_or_night") # allows including the first night period while discarding the first day period (incomplete)
 
 # Plot the fits
-pdf(file.path(getwd(), "Figures", paste(idExp, "Step#04b_fit_all_pots_use_VPD.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#04b_fit_all_pots_use_VPD.pdf", sep = "_")), width = 8, height = 5)
 for (irr in c("WW", "WS"))
   {
   for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
@@ -181,7 +184,7 @@ for (irr in c("WW", "WS"))
 dev.off()
 
 # Save the results
-write.csv(results_fit_use_VPD, file.path(getwd(), "Fitted_data", "results_fit_use_VPD.csv"), row.names = F)
+write.csv(results_fit_use_VPD, file.path(getwd(), "Arabidopsis", idExp, "Fitted_data", "results_fit_use_VPD.csv"), row.names = F)
 
 
 #------------------------------------------------------------------------------#
@@ -209,7 +212,7 @@ results_fit_acclim <- run_fit(df,
                               remove_mode = "day_or_night") # allows including the first night period while discarding the first day period (incomplete)
 
 # Plot the fits
-pdf(file.path(getwd(), "Figures", paste(idExp, "Step#04c_fit_all_pots_acclim.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#04c_fit_all_pots_acclim.pdf", sep = "_")), width = 8, height = 5)
 for (irr in c("WW", "WS"))
   {
   for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
@@ -241,7 +244,7 @@ for (irr in c("WW", "WS"))
 dev.off()
 
 # Save the results
-write.csv(results_fit_acclim, file.path(getwd(), "Fitted_data", "results_fit_acclim.csv"), row.names = F)
+write.csv(results_fit_acclim, file.path(getwd(), "Arabidopsis", idExp, "Fitted_data", "results_fit_acclim.csv"), row.names = F)
 
 
 #------------------------------------------------------------------------------#
@@ -261,7 +264,7 @@ results_fit_acclim_use_VPD <- run_fit(df,
                                       remove_mode = "day_or_night") # allows including the first night period while discarding the first day period (incomplete)
 
 # Plot the fits
-pdf(file.path(getwd(), "Figures", paste(idExp, "Step#04d_fit_all_pots_acclim_use_VPD.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#04d_fit_all_pots_acclim_use_VPD.pdf", sep = "_")), width = 8, height = 5)
 for (irr in c("WW", "WS"))
   {
   for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
@@ -293,7 +296,7 @@ for (irr in c("WW", "WS"))
 dev.off()
 
 # Save the results
-write.csv(results_fit_acclim_use_VPD, file.path(getwd(), "Fitted_data", "results_fit_acclim_use_VPD.csv"), row.names = F)
+write.csv(results_fit_acclim_use_VPD, file.path(getwd(), "Arabidopsis", idExp, "Fitted_data", "results_fit_acclim_use_VPD.csv"), row.names = F)
 
 
 
@@ -305,7 +308,7 @@ write.csv(results_fit_acclim_use_VPD, file.path(getwd(), "Fitted_data", "results
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Retrieve the original 'ColorsPeriod' (otherwise the black rectangle is incomplete)
-source(file.path(getwd(), "Step#00_define_experiment.R"))
+source(file.path(getwd(), "Arabidopsis", idExp, "Step#00_define_experiment.R"))
 
 # Set the function
 plot_individual_fit <- function (pot,
@@ -363,44 +366,44 @@ ht <- 2 # fig height
 # Col-0
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_individual_fit("242", LEGEND_TITLE = "Col-0 - Pot #242", draw_x_axis = F, draw_rect_env = T)
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "fit_Col-a.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "fit_Col-a.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_individual_fit("275", LEGEND_TITLE = "Col-0 - Pot #275", draw_x_axis = F, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "fit_Col-b.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "fit_Col-b.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_individual_fit("368", LEGEND_TITLE = "Col-0 - Pot #368", draw_x_axis = T, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "fit_Col-c.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "fit_Col-c.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 # pgm
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_individual_fit("233", LEGEND_TITLE = expression(paste(italic("pgm"), " - Pot #233", sep = "")), draw_x_axis = F, draw_rect_env = T)
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "fit_pgm-a.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "fit_pgm-a.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_individual_fit("272", LEGEND_TITLE = expression(paste(italic("pgm"), " - Pot #272", sep = "")), draw_x_axis = F, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "fit_pgm-b.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "fit_pgm-b.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_individual_fit("324", LEGEND_TITLE = expression(paste(italic("pgm"), " - Pot #324", sep = "")), draw_x_axis = T, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "fit_pgm-c.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "fit_pgm-c.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 
 # sex1
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_individual_fit("226", LEGEND_TITLE = expression(paste(italic("sex1"), " - Pot #226", sep = "")), draw_x_axis = F, draw_rect_env = T)
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "fit_sex1-a.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "fit_sex1-a.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_individual_fit("271", LEGEND_TITLE = expression(paste(italic("sex1"), " - Pot #271", sep = "")), draw_x_axis = F, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "fit_sex1-b.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "fit_sex1-b.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_individual_fit("316", LEGEND_TITLE = expression(paste(italic("sex1"), " - Pot #316", sep = "")), draw_x_axis = T, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "fit_sex1-c.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "fit_sex1-c.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 

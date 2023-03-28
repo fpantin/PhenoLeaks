@@ -26,13 +26,13 @@ for (pkg in c("gplots"))
   library(pkg, character.only = T)
   }
 
-if (!"ComplexHeatmap" %in% installed.packages()[, "Package"])
-  { 
-  if (!"BiocManager" %in% installed.packages()[, "Package"]) { install.packages("BiocManager") }
-  library("BiocManager")
-  BiocManager::install("ComplexHeatmap")
-  }
-library("ComplexHeatmap")
+# if (!"ComplexHeatmap" %in% installed.packages()[, "Package"])
+#   { 
+#   if (!"BiocManager" %in% installed.packages()[, "Package"]) { install.packages("BiocManager") }
+#   library("BiocManager")
+#   BiocManager::install("ComplexHeatmap")
+#   }
+# library("ComplexHeatmap")
 
 
 
@@ -43,7 +43,9 @@ library("ComplexHeatmap")
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-dir_PhenoLeaks <- file.path(dirname(getwd()), "PhenoLeaks")
+# Note that the working directory is expected to be the one of the PhenoLeaks project directory,
+# e.g. in RStudio: Session > Set Working Directory > To Project Directory
+dir_PhenoLeaks <- file.path(getwd(), "_core")
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_graphics.R"))
 
@@ -56,7 +58,7 @@ source(file.path(dir_PhenoLeaks, "PhenoLeaks_graphics.R"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-source(file.path(getwd(), "Step#00_define_experiment.R"))
+source(file.path(getwd(), "Arabidopsis", idExp, "Step#00_define_experiment.R"))
 
 # To check the constants, run:
 #set_constants_C2M47()
@@ -78,8 +80,8 @@ source(file.path(getwd(), "Step#00_define_experiment.R"))
 #------------------------------------------------------------------------------#
 
 # Import data
-#res <- read.csv(file.path(getwd(), "Fitted_data", "results_fit_use_VPD.csv"))
-res <- read.csv(file.path(getwd(), "Fitted_data", "results_fit_acclim.csv"))
+#res <- read.csv(file.path(getwd(), "Arabidopsis", idExp, "Fitted_data", "results_fit_use_VPD.csv"))
+res <- read.csv(file.path(getwd(), "Arabidopsis", idExp, "Fitted_data", "results_fit_acclim.csv"))
 res <- cbind(data.frame(idExperiment = idExp), res)
 
 # Back to 'idPeriod' former name (for compatibility)
@@ -141,7 +143,7 @@ plot_geno_PDF <- function (GEN_SELECT, GENO_LABELS, gen_file,
                            PERIOD_FIT_LABELS = c("Control", "High CO2", "Low light", "Recovery"),
                            PERIOD_ACCLIM_LABELS = c("High CO2", "Low light", "Recovery 1"))
   {
-  pdf(file.path(getwd(), "Figures", paste(idExp, "_Step#05a_stat_", gen_file, ".pdf", sep = "")), width = 8, height = 5)
+  pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "_Step#05a_stat_", gen_file, ".pdf", sep = "")), width = 8, height = 5)
   
   c(myplots1, VAR_all) := anova_batch(res,
                                       anova_jitter_function = anova2_jitter,
@@ -290,7 +292,7 @@ PPTX_stat_main <- function (gen_file)
                      myplots1[[which(VAR_all == "Sigma_preop_obs")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
                      ncol = 4, nrow = 2, common.legend = T, align = "v")
   print(myfig)
-  graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
+  graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
   dev.off()
   }
 
@@ -311,7 +313,7 @@ PPTX_stat_suppl <- function (gen_file)
                      myplots1[[which(VAR_all == "Delta_night_obs")]],
                      ncol = 4, nrow = 3, common.legend = T, align = "v")
   print(myfig)
-  graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "_stat_suppl_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 4-0.3)
+  graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_suppl_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 4-0.3)
   dev.off()
   }
 
@@ -352,7 +354,7 @@ ggarrange(myplots1[[which(VAR_all == "A_rapid_op_obs")]] + theme(plot.margin = u
           myplots1[[which(VAR_all == "Sigma_preclo_obs")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           myplots1[[which(VAR_all == "Sigma_preop_obs")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           ncol = 2, nrow = 3, common.legend = T, align = "v")
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, "_obs.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5/2, height = 4-0.3)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, "_obs.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5/2, height = 4-0.3)
 dev.off()
 
 dev.new(width = 6.5, height = (4-0.3)*2/3, unit = "in", noRStudioGD = T)
@@ -365,7 +367,7 @@ ggarrange(myplots1[[which(VAR_all == "E_diel_obs")]],
           myplots1[[which(VAR_all == "sigma_night_obs")]],
           myplots1[[which(VAR_all == "Delta_night_obs")]],
           ncol = 4, nrow = 2, common.legend = T, align = "v")
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "_stat_suppl_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_suppl_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
 dev.off()
 
 dev.new(width = 6.5, height = (4-0.3)*2/3, unit = "in", noRStudioGD = T)
@@ -378,7 +380,7 @@ ggarrange(myplots2[[which(VAR_common_fit == "E_mean")]] + theme(plot.margin = un
           myplots2[[which(VAR_common_fit == "phi2")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           myplots1[[which(VAR_all == "Sigma_preop_mod")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           ncol = 4, nrow = 2, common.legend = T, align = "v")
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, "_fit.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, "_fit.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
 dev.off()
 
 
@@ -546,7 +548,7 @@ c(myplots_acclim, VAR_acclim) := anova_batch(res,
 # The code is commented to secure the pptx file (manual step above)
 #dev.new(width = 6.5, height = 4.5, unit = "in", noRStudioGD = T)
 #myplots_acclim 
-#graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "_stat_acclim.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 4.5)
+#graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_acclim.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 4.5)
 #dev.off()
 
 
@@ -555,7 +557,7 @@ c(myplots_acclim, VAR_acclim) := anova_batch(res,
 #------------------------------------------------------------------------------#
 
 # Plot all variables in a PDF file
-pdf(file.path(getwd(), "Figures", paste(idExp, "Step#05b_stat_irrigation_Col_pgm.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#05b_stat_irrigation_Col_pgm.pdf", sep = "_")), width = 8, height = 5)
   
   c(myplots1, VAR_all) := anova_batch(res,
                                       anova_jitter_function = anova3_jitter,
@@ -651,7 +653,7 @@ ggarrange(myplots2[[which(VAR_common_fit == "E_mean")]] + theme(plot.margin = un
           myplots2[[which(VAR_common_fit == "A2")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           myplots2[[which(VAR_common_fit == "phi2")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           ncol = 2, nrow = 3, common.legend = T, align = "v")
-graph2ppt(file = file.path(getwd(), "Figures", "PPTX", paste(idExp, "_stat_irrigation_Col_pgm.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 6)
+graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_irrigation_Col_pgm.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 6)
 dev.off()
 
 res$idWatering[res$idWatering == "Well-watered"] <- "WW"
@@ -665,339 +667,186 @@ res$idWatering[res$idWatering == "Water stress"] <- "WS"
 
 
 
-#------------------------------------------------------------------------------#
-#                                    Heatmap                                   #
-#------------------------------------------------------------------------------#
-
-
-#require(ComplexHeatmap)
-#require(gplots)
-
-# Filter the phases for low amplitudes
-res_dupl <- res
-res_dupl[res_dupl$A1 < 0.05 & !is.na(res_dupl$A1), c("phi1", "phi1_minus_phi2", "t_day_max_mod", "t_day_max_obs", "t_night_min_mod", "t_night_min_obs")] <- NA
-res_dupl[res_dupl$A2 < 0.02 & !is.na(res_dupl$A2), c("phi2", "phi1_minus_phi2")] <- NA
-
-# Create the average matrix
-avg <- aggregate(res_dupl[, -which(colnames(res_dupl) %in% c("idExperiment", "idGenotype", "idWatering", "idPot", "idPeriod", "diel_trend", "diel_trend_baseline", "t1_fit", "t2_fit", "adjR2", "RMSE", "E_EON_before_obs", "E_EON_before_mod", "A_rapid_op_transition_obs", "A_rapid_op_stable_obs"))],
-                 by = list (idWatering = res_dupl$idWatering, idGenotype = res_dupl$idGenotype, idPeriod = res_dupl$idPeriod),
-                 FUN = mean, na.rm = T)
-mat <- as.matrix(avg[-(1:3)])
-mat <- mat[, !colnames(mat) %in% c("E_day_mean_mod", "E_day_mean_obs", "E_night_mean_mod", "E_night_mean_obs", "E_EON_mod", "E_EON_obs", "E_day_max_obs", "E_day_max_mod", "E_night_min_obs", "E_night_min_mod", "phi1_minus_phi2", "A1_plus_A2")]
-row.names(mat) <- paste(avg[,1], avg[,2], avg[,3])
-
-# Set vector of row names
-LABROW <- c(expression(paste(italic("abcb14"), "-1", sep = "")),
-            expression(paste(italic("abcb14"), "-2", sep = "")),
-            expression(italic("amy3")),
-            expression(italic("amy3 bam1")),
-            expression(italic("bam1")),
-            expression(italic("bam1 bam3")),
-            expression(italic("bam3")),
-            expression("Col-0 (WS)"),
-            expression("Col-0"),
-            expression("Col-0"^"†"),
-            expression(italic("dpe1")),
-            expression(italic("dpe2")),
-            expression(italic("isa1")^"†"),
-            expression(italic("mex1")),
-            expression(italic("pgi")),
-            expression(paste(italic("pgm"), " (WS)", sep = "")),
-            expression(italic("pgm")),
-            expression(italic("sex1")),
-            expression(italic("ss4")^"†"))     
-
-# Set vector of column names
-LABCOL <- c(expression("E"["diel"]),
-            expression("A"["rapid op"]),
-            expression("A"["rapid clo"]),
-            expression("t"["day max"]),
-            expression(sigma["day"]),
-            expression(Delta["day"]),
-            expression(Sigma["preclo"]),
-            expression("t"["night min"]),
-            expression(sigma["night"]),
-            expression(Delta["night"]),
-            expression(Sigma["preop"]),
-            expression("E"["mean"]),
-            expression("A"["SQW"]),
-            expression("A"["1"]),
-            expression(varphi["1"]),
-            expression("A"["2"]),
-            expression(varphi["2"]),
-            expression(hat("t")["day max"]),
-            expression(hat(sigma)["day"]),
-            expression(hat(Delta)["day"]),
-            expression(hat(Sigma)["preclo"]),
-            expression(hat("t")["night min"]),
-            expression(hat(sigma)["night"]),
-            expression(hat(Delta)["night"]),
-            expression(hat(Sigma)["preop"]),
-            expression(hat("A")["diel"]),
-            expression("A"["diel"]))
-
-# Set vector of column names for PPTX export
-# (several symbols are not supported by 'graph2ppt()', need to add them manually on the PPTX file)
-LABCOL_PPTX <- c(expression("E"["diel"]),
-                 expression("A"["rapid op"]),
-                 expression("A"["rapid clo"]),
-                 expression("t"["day max"]),
-                 expression("s"["day"]),#expression(sigma["day"]),
-                 expression("D"["day"]),#expression(Delta["day"]),
-                 expression("S"["preclo"]),#expression(Sigma["preclo"]),
-                 expression("t"["night min"]),
-                 expression("s"["night"]),#expression(sigma["night"]),
-                 expression("D"["night"]),#expression(Delta["night"]),
-                 expression("S"["preop"]),#expression(Sigma["preop"]),
-                 expression("E"["mean"]),
-                 expression("A"["SQW"]),
-                 expression("A"["1"]),
-                 expression("j"["1"]),#expression(varphi["1"]),
-                 expression("A"["2"]),
-                 expression("j"["2"]),#expression(varphi["2"]),
-                 expression("t"["day max"]),#expression(hat("t")["day max"]),
-                 expression("s"["day"]),#expression(hat(sigma)["day"]),
-                 expression("D"["day"]),#expression(hat(Delta)["day"]),
-                 expression("S"["preclo"]),#expression(hat(Sigma)["preclo"]),
-                 expression("t"["night min"]),#expression(hat("t")["night min"]),
-                 expression("s"["night"]),#expression(hat(sigma)["night"]),
-                 expression("D"["night"]),#expression(hat(Delta)["night"]),
-                 expression("S"["preop"]),#expression(hat(Sigma)["preop"]),
-                 expression("A"["diel"]),#expression(hat("A")["diel"]),
-                 expression("A"["diel"]))
-
-
-# Set the colors for the traits
-trait_colors <- c(palette("default")[1], palette("default")[3], palette("default")[3],
-                  "darkorange", "darkorange3", "darkorange3", "darkorange",
-                  "deepskyblue2", "dodgerblue4", "dodgerblue4", "deepskyblue2",
-                  "aquamarine4", palette("default")[3], "coral3", "coral3", "coral1", "coral1",
-                  "darkorange", "darkorange3", "darkorange3", "darkorange",
-                  "deepskyblue2", "dodgerblue4", "dodgerblue4", "deepskyblue2",
-                  "palegreen3", "palegreen3")
-
-# Set the colors for the periods
-vector_colperiod <- ColorsPeriod$col
-names(vector_colperiod) <- ColorsPeriod$idPeriod
-
-
-#1# Heatmap without water stress
-mat_WW <- mat[avg$idWatering == "WW", ]
-mat_WW <- scale(mat_WW)
-
-LABROW_WW <- LABROW[!grepl("WS", LABROW)]
-
-row_ha <- rowAnnotation(Environment = avg[avg$idWatering == "WW", 3],
-                        col = list(Environment = vector_colperiod),
-                        show_annotation_name = F,
-                        annotation_legend_param = list(Environment = list(labels = c("Control", expression("High CO"[2]), "Low light", "Recov.1", "Recov.2"),
-                                                                          nrow = 1,
-                                                                          title_position = "topleft",
-                                                                          labels_gp = gpar(fontsize = 8),
-                                                                          title_gp = gpar(fontsize = 10, fontface = "plain"))))
-
-hmp <- Heatmap(mat_WW, name = "Trait value (scaled and centered)",
-               col = colorpanel(256, "purple", "black", "orange"),
-               #rect_gp = gpar(col = "gray", lwd = 0.01),
-               row_labels = rep(LABROW_WW, 5), 
-               column_labels = LABCOL,
-               row_names_gp = gpar(fontsize = 7, col = ColorsTrt$col[match(avg[avg$idWatering == "WW", 2], ColorsTrt$idGenotype)]),
-               column_names_gp = gpar(fontsize = 8, col = trait_colors),
-               column_names_rot = 45,
-               left_annotation = row_ha,
-               heatmap_legend_param = list(direction = "horizontal",
-                                           title_position = "topcenter",
-                                           legend_width = unit(6, "cm"),
-                                           title_gp = gpar(fontsize = 10, fontface = "plain"),
-                                           labels_gp = gpar(fontsize = 8)),
-               # cluster_rows = reorder(as.dendrogram(hclust(dist(mat))),
-               #                        wts = ifelse(rownames(mat) == "pgm-1 0-1-2", 0, 1) + ifelse(rownames(mat) == "dpe2-5 0-1-2", 1, 0),
-               #                        agglo.FUN = mean),
-               # cluster_columns = reorder(as.dendrogram(hclust(dist(t(mat)))),
-               #                           wts = ifelse(colnames(mat) == "A_SQW", 0, 2) + ifelse(colnames(mat) == "E_diel_obs", 0, 1) + ifelse(colnames(mat) == "sigma_day_obs", 1, 0) + ifelse(colnames(mat) == "A2", 2, 0) + ifelse(colnames(mat) == "Sigma_preop_mod", 3, 0),
-               #                           agglo.FUN = mean),
-               row_split = 5, column_split = 4,
-               #row_gap = unit(c(2, 4, 2), "pt"), column_gap = unit(c(2, 4, 2), "pt"),
-               row_title = NULL, column_title = NULL)
-
-pdf(file.path(getwd(), "Figures", paste(idExp, "Step#05d_heatmap_WW.pdf", sep = "_")), width = 6.5, height = 7.5)
-draw(hmp, heatmap_legend_side = "top")
-dev.off()
-
-dev.new(width = 6.5, height = 7.5, unit = "in", noRStudioGD = T)
-draw(hmp, heatmap_legend_side = "top")
-
-graph2ppt(file = "Output/Heatmap.pptx", paper = "A4", orient = "portrait", width = 6.5, height = 7.5)
-
-
-
-
-
-
-#2# With water stress
-
-mat_all <- scale(mat)
-
-row_ha <- rowAnnotation(Environment = avg[,3],
-                        col = list(Environment = vector_colperiod),
-                        show_annotation_name = F,
-                        annotation_legend_param = list(Environment = list(labels = c("Control", expression("High CO"[2]), "Low light", "Recov.1", "Recov.2"),
-                                                                          nrow = 1,
-                                                                          title_position = "topleft",
-                                                                          labels_gp = gpar(fontsize = 8),
-                                                                          title_gp = gpar(fontsize = 10, fontface = "plain"))))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# export_anova2_posthoc <- function (file,
-#                                    dat, # the dataframe
-#                                    Y, # the name of the dependent variable (character)
-#                                    MAIN_FACTOR = "idPeriod",
-#                                    GROUP = "idGenotype")
-#   {
-#   #require(rstatix)
-#   
-#   write.table(paste(rep("~", nchar(Y)), sep = "", collapse = ""), file, row.names = F, col.names = F, sep = ",", append = T)
-#   write.table(Y, file, row.names = F, col.names = F, sep = ",", append = T)
-#   write.table(paste(rep("~", nchar(Y)), sep = "", collapse = ""), file, row.names = F, col.names = F, sep = ",", append = T)
-#   write.table("", file, row.names = F, col.names = F, sep = ",", append = T)
-#   
-#   # Two-way (mixed) ANOVA
-#   if ("idPeriod" %in% c(MAIN_FACTOR, GROUP))
-#     {
-#     between_var <- c(MAIN_FACTOR, GROUP)[!c(MAIN_FACTOR, GROUP) %in% "idPeriod"]
-#     res.aov <- anova_test(data = dat,
-#                           dv = all_of(Y),
-#                           between = all_of(between_var),
-#                           within = idPeriod,
-#                           wid = idPot)
-#     }
-#   else
-#     {
-#     res.aov <- anova_test(data = dat,
-#                           dv = all_of(Y),
-#                           between = c(all_of(MAIN_FACTOR), all_of(GROUP)))
-#     }
-#   table.aov <- get_anova_table(res.aov)
-#   write.table("ANOVA table", file, row.names = F, col.names = F, sep = ",", append = T)
-#   write.table(table.aov, file, row.names = F, sep = ",", append = T)
-#   write.table("", file, row.names = F, col.names = F, sep = ",", append = T)
-#   
-#   # Pairwise t-tests
-#   write.table(paste(GROUP, "pairwise comparisons"), file, row.names = F, col.names = F, sep = ",", append = T)
-#   if (table.aov[3, "p"] < 0.05) write.table("WARNING - The significant interaction may make these comparisons irrelevant", file, row.names = F, col.names = F, sep = ",", append = T)
-#   pwc <- dat %>%
-#     pairwise_t_test(., reformulate(GROUP, Y), p.adjust.method = "bonferroni")
-#   write.table(pwc, file, row.names = F, sep = ",", append = T)
-#   write.table("", file, row.names = F, col.names = F, sep = ",", append = T)
-#   
-#   write.table(paste(MAIN_FACTOR, "pairwise comparisons"), file, row.names = F, col.names = F, sep = ",", append = T)
-#   if (table.aov[3, "p"] < 0.05) write.table("WARNING - The significant interaction may make these comparisons irrelevant", file, row.names = F, col.names = F, sep = ",", append = T)
-#   pwc <- dat %>%
-#       pairwise_t_test(., reformulate(MAIN_FACTOR, Y), p.adjust.method = "bonferroni")
-#   write.table(pwc, file, row.names = F, sep = ",", append = T)
-#   write.table("", file, row.names = F, col.names = F, sep = ",", append = T)
-#   
-#   write.table(paste(GROUP, "conditional pairwise comparisons"), file, row.names = F, col.names = F, sep = ",", append = T)
-#   pwc <- dat %>%
-#     group_by(get(MAIN_FACTOR)) %>%
-#     pairwise_t_test(., reformulate(GROUP, Y), p.adjust.method = "bonferroni")
-#   colnames(pwc)[1] <- MAIN_FACTOR
-#   write.table(pwc, file, row.names = F, sep = ",", append = T)
-#   write.table("", file, row.names = F, col.names = F, sep = ",", append = T)
-#   
-#   write.table(paste(MAIN_FACTOR, "conditional pairwise comparisons"), file, row.names = F, col.names = F, sep = ",", append = T)
-#   pwc <- dat %>%
-#     group_by(get(GROUP)) %>%
-#     pairwise_t_test(., reformulate(MAIN_FACTOR, Y), p.adjust.method = "bonferroni")
-#   colnames(pwc)[1] <- GROUP
-#   write.table(pwc, file, row.names = F, sep = ",", append = T)
-#   write.table("", file, row.names = F, col.names = F, sep = ",", append = T)
-#   
-#   write.table(paste(rep("_", 150), sep = "", collapse = ""), file, row.names = F, col.names = F, sep = ",", append = T)  
-#   write.table("", file, row.names = F, col.names = F, sep = ",", append = T)
-#   }
+# #------------------------------------------------------------------------------#
+# #                                    Heatmap                                   #
+# #------------------------------------------------------------------------------#
 # 
 # 
+# #require(ComplexHeatmap)
+# #require(gplots)
 # 
-#                             
+# # Filter the phases for low amplitudes
+# res_dupl <- res
+# res_dupl[res_dupl$A1 < 0.05 & !is.na(res_dupl$A1), c("phi1", "phi1_minus_phi2", "t_day_max_mod", "t_day_max_obs", "t_night_min_mod", "t_night_min_obs")] <- NA
+# res_dupl[res_dupl$A2 < 0.02 & !is.na(res_dupl$A2), c("phi2", "phi1_minus_phi2")] <- NA
 # 
-#          
+# # Create the average matrix
+# avg <- aggregate(res_dupl[, -which(colnames(res_dupl) %in% c("idExperiment", "idGenotype", "idWatering", "idPot", "idPeriod", "diel_trend", "diel_trend_baseline", "t1_fit", "t2_fit", "adjR2", "RMSE", "E_EON_before_obs", "E_EON_before_mod", "A_rapid_op_transition_obs", "A_rapid_op_stable_obs"))],
+#                  by = list (idWatering = res_dupl$idWatering, idGenotype = res_dupl$idGenotype, idPeriod = res_dupl$idPeriod),
+#                  FUN = mean, na.rm = T)
+# mat <- as.matrix(avg[-(1:3)])
+# mat <- mat[, !colnames(mat) %in% c("E_day_mean_mod", "E_day_mean_obs", "E_night_mean_mod", "E_night_mean_obs", "E_EON_mod", "E_EON_obs", "E_day_max_obs", "E_day_max_mod", "E_night_min_obs", "E_night_min_mod", "phi1_minus_phi2", "A1_plus_A2")]
+# row.names(mat) <- paste(avg[,1], avg[,2], avg[,3])
+# 
+# # Set vector of row names
+# LABROW <- c(expression(paste(italic("abcb14"), "-1", sep = "")),
+#             expression(paste(italic("abcb14"), "-2", sep = "")),
+#             expression(italic("amy3")),
+#             expression(italic("amy3 bam1")),
+#             expression(italic("bam1")),
+#             expression(italic("bam1 bam3")),
+#             expression(italic("bam3")),
+#             expression("Col-0 (WS)"),
+#             expression("Col-0"),
+#             expression("Col-0"^"†"),
+#             expression(italic("dpe1")),
+#             expression(italic("dpe2")),
+#             expression(italic("isa1")^"†"),
+#             expression(italic("mex1")),
+#             expression(italic("pgi")),
+#             expression(paste(italic("pgm"), " (WS)", sep = "")),
+#             expression(italic("pgm")),
+#             expression(italic("sex1")),
+#             expression(italic("ss4")^"†"))     
+# 
+# # Set vector of column names
+# LABCOL <- c(expression("E"["diel"]),
+#             expression("A"["rapid op"]),
+#             expression("A"["rapid clo"]),
+#             expression("t"["day max"]),
+#             expression(sigma["day"]),
+#             expression(Delta["day"]),
+#             expression(Sigma["preclo"]),
+#             expression("t"["night min"]),
+#             expression(sigma["night"]),
+#             expression(Delta["night"]),
+#             expression(Sigma["preop"]),
+#             expression("E"["mean"]),
+#             expression("A"["SQW"]),
+#             expression("A"["1"]),
+#             expression(varphi["1"]),
+#             expression("A"["2"]),
+#             expression(varphi["2"]),
+#             expression(hat("t")["day max"]),
+#             expression(hat(sigma)["day"]),
+#             expression(hat(Delta)["day"]),
+#             expression(hat(Sigma)["preclo"]),
+#             expression(hat("t")["night min"]),
+#             expression(hat(sigma)["night"]),
+#             expression(hat(Delta)["night"]),
+#             expression(hat(Sigma)["preop"]),
+#             expression(hat("A")["diel"]),
+#             expression("A"["diel"]))
+# 
+# # Set vector of column names for PPTX export
+# # (several symbols are not supported by 'graph2ppt()', need to add them manually on the PPTX file)
+# LABCOL_PPTX <- c(expression("E"["diel"]),
+#                  expression("A"["rapid op"]),
+#                  expression("A"["rapid clo"]),
+#                  expression("t"["day max"]),
+#                  expression("s"["day"]),#expression(sigma["day"]),
+#                  expression("D"["day"]),#expression(Delta["day"]),
+#                  expression("S"["preclo"]),#expression(Sigma["preclo"]),
+#                  expression("t"["night min"]),
+#                  expression("s"["night"]),#expression(sigma["night"]),
+#                  expression("D"["night"]),#expression(Delta["night"]),
+#                  expression("S"["preop"]),#expression(Sigma["preop"]),
+#                  expression("E"["mean"]),
+#                  expression("A"["SQW"]),
+#                  expression("A"["1"]),
+#                  expression("j"["1"]),#expression(varphi["1"]),
+#                  expression("A"["2"]),
+#                  expression("j"["2"]),#expression(varphi["2"]),
+#                  expression("t"["day max"]),#expression(hat("t")["day max"]),
+#                  expression("s"["day"]),#expression(hat(sigma)["day"]),
+#                  expression("D"["day"]),#expression(hat(Delta)["day"]),
+#                  expression("S"["preclo"]),#expression(hat(Sigma)["preclo"]),
+#                  expression("t"["night min"]),#expression(hat("t")["night min"]),
+#                  expression("s"["night"]),#expression(hat(sigma)["night"]),
+#                  expression("D"["night"]),#expression(hat(Delta)["night"]),
+#                  expression("S"["preop"]),#expression(hat(Sigma)["preop"]),
+#                  expression("A"["diel"]),#expression(hat("A")["diel"]),
+#                  expression("A"["diel"]))
 # 
 # 
+# # Set the colors for the traits
+# trait_colors <- c(palette("default")[1], palette("default")[3], palette("default")[3],
+#                   "darkorange", "darkorange3", "darkorange3", "darkorange",
+#                   "deepskyblue2", "dodgerblue4", "dodgerblue4", "deepskyblue2",
+#                   "aquamarine4", palette("default")[3], "coral3", "coral3", "coral1", "coral1",
+#                   "darkorange", "darkorange3", "darkorange3", "darkorange",
+#                   "deepskyblue2", "dodgerblue4", "dodgerblue4", "deepskyblue2",
+#                   "palegreen3", "palegreen3")
+# 
+# # Set the colors for the periods
+# vector_colperiod <- ColorsPeriod$col
+# names(vector_colperiod) <- ColorsPeriod$idPeriod
 # 
 # 
-# require(rstatix)
-# gen <- c("Col-0", "pgm-1", "sex1-3")
-# var <- "phi2"#"phi1"#"E_diel_obs" #
-# res.aov <- anova_test(data = res[res$idGenotype %in% gen & res$idWatering=="WW", ],
-#                       dv = all_of(var),
-#                       wid = idPot,
-#                       between = idGenotype,
-#                       within = idPeriod)
-# a=get_anova_table(res.aov)
+# #1# Heatmap without water stress
+# mat_WW <- mat[avg$idWatering == "WW", ]
+# mat_WW <- scale(mat_WW)
 # 
-# b=res[res$idGenotype %in% gen & res$idWatering=="WW", ] %>%
-#   group_by(idPeriod) %>%
-#   pairwise_t_test(., reformulate("idGenotype", var), p.adjust.method = "bonferroni")
-# c=res[res$idGenotype %in% gen & res$idWatering=="WW", ] %>%
-#   pairwise_t_test(., reformulate("idGenotype", var), p.adjust.method = "bonferroni")
+# LABROW_WW <- LABROW[!grepl("WS", LABROW)]
 # 
-# d=res[res$idGenotype %in% gen & res$idWatering=="WW", ] %>%
-#   group_by(idGenotype) %>%
-#   pairwise_t_test(., reformulate("idPeriod", var), p.adjust.method = "bonferroni")
-# e=res[res$idGenotype %in% gen & res$idWatering=="WW", ] %>%
-#   pairwise_t_test(., reformulate("idPeriod", var), p.adjust.method = "bonferroni")
+# row_ha <- rowAnnotation(Environment = avg[avg$idWatering == "WW", 3],
+#                         col = list(Environment = vector_colperiod),
+#                         show_annotation_name = F,
+#                         annotation_legend_param = list(Environment = list(labels = c("Control", expression("High CO"[2]), "Low light", "Recov.1", "Recov.2"),
+#                                                                           nrow = 1,
+#                                                                           title_position = "topleft",
+#                                                                           labels_gp = gpar(fontsize = 8),
+#                                                                           title_gp = gpar(fontsize = 10, fontface = "plain"))))
 # 
-# write.table(a, "test.csv", row.names = F, sep = ",", col.names = T)
-# write.table(b, "test.csv", row.names = F, sep = ",", col.names = T, append = T)
+# hmp <- Heatmap(mat_WW, name = "Trait value (scaled and centered)",
+#                col = colorpanel(256, "purple", "black", "orange"),
+#                #rect_gp = gpar(col = "gray", lwd = 0.01),
+#                row_labels = rep(LABROW_WW, 5), 
+#                column_labels = LABCOL,
+#                row_names_gp = gpar(fontsize = 7, col = ColorsTrt$col[match(avg[avg$idWatering == "WW", 2], ColorsTrt$idGenotype)]),
+#                column_names_gp = gpar(fontsize = 8, col = trait_colors),
+#                column_names_rot = 45,
+#                left_annotation = row_ha,
+#                heatmap_legend_param = list(direction = "horizontal",
+#                                            title_position = "topcenter",
+#                                            legend_width = unit(6, "cm"),
+#                                            title_gp = gpar(fontsize = 10, fontface = "plain"),
+#                                            labels_gp = gpar(fontsize = 8)),
+#                # cluster_rows = reorder(as.dendrogram(hclust(dist(mat))),
+#                #                        wts = ifelse(rownames(mat) == "pgm-1 0-1-2", 0, 1) + ifelse(rownames(mat) == "dpe2-5 0-1-2", 1, 0),
+#                #                        agglo.FUN = mean),
+#                # cluster_columns = reorder(as.dendrogram(hclust(dist(t(mat)))),
+#                #                           wts = ifelse(colnames(mat) == "A_SQW", 0, 2) + ifelse(colnames(mat) == "E_diel_obs", 0, 1) + ifelse(colnames(mat) == "sigma_day_obs", 1, 0) + ifelse(colnames(mat) == "A2", 2, 0) + ifelse(colnames(mat) == "Sigma_preop_mod", 3, 0),
+#                #                           agglo.FUN = mean),
+#                row_split = 5, column_split = 4,
+#                #row_gap = unit(c(2, 4, 2), "pt"), column_gap = unit(c(2, 4, 2), "pt"),
+#                row_title = NULL, column_title = NULL)
+# 
+# pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#05d_heatmap_WW.pdf", sep = "_")), width = 6.5, height = 7.5)
+# draw(hmp, heatmap_legend_side = "top")
+# dev.off()
+# 
+# dev.new(width = 6.5, height = 7.5, unit = "in", noRStudioGD = T)
+# draw(hmp, heatmap_legend_side = "top")
+# 
+# graph2ppt(file = "Output/Heatmap.pptx", paper = "A4", orient = "portrait", width = 6.5, height = 7.5)
 # 
 # 
 # 
 # 
 # 
 # 
+# #2# With water stress
 # 
+# mat_all <- scale(mat)
 # 
-# dat_paired <- res[!res$outlier & res$geno %in% gen, c("geno", "pot", "idperiod", var)]
-# names(dat_paired)[4] <- "DV" # dependent variable
-# dat_paired_full <- data.frame(geno = NULL, pot = NULL, idperiod = NULL)
-# for (g in gen)
-# {
-#   dat_paired_full <- rbind(dat_paired_full,
-#                            expand.grid(geno = g, pot = unique(dat_paired$pot[dat_paired$geno == g]), idperiod = unique(dat_paired$idperiod)))
-# }
-# trt_paired <- paste(dat_paired$geno, dat_paired$pot, dat_paired$idperiod)
-# trt_paired_full <- paste(dat_paired_full$geno, dat_paired_full$pot, dat_paired_full$idperiod)
-# dat_paired_full$DV <- NA
-# dat_paired_full$DV[match(trt_paired, trt_paired_full)] <- dat_paired$DV
-# 
-# ## WARNING - NOT SURE HOW MISSING DATA ARE HANDLED!!!
-# # If GxE interaction
-# dat_paired_full %>%
-#   group_by(geno) %>%
-#   pairwise_t_test(DV ~ idperiod, paired = T, p.adjust.method = "bonferroni")
-# # If no GxE interaction
-# dat_paired_full %>%
-#   pairwise_t_test(DV ~ idperiod, paired = T, p.adjust.method = "bonferroni")
-# 
-# aggregate(dat_paired_full$DV, by = list(geno = dat_paired_full$geno, idperiod=dat_paired_full$idperiod), FUN = mean, na.rm = T)
-# aggregate(dat_paired_full$DV, by = list(geno = dat_paired_full$geno, idperiod=dat_paired_full$idperiod), FUN = function (x) { sd(x, na.rm = T) / sqrt(length(na.omit(x)) - 1) })
-# 
-# 
-# 
-# 
-# 
+# row_ha <- rowAnnotation(Environment = avg[,3],
+#                         col = list(Environment = vector_colperiod),
+#                         show_annotation_name = F,
+#                         annotation_legend_param = list(Environment = list(labels = c("Control", expression("High CO"[2]), "Low light", "Recov.1", "Recov.2"),
+#                                                                           nrow = 1,
+#                                                                           title_position = "topleft",
+#                                                                           labels_gp = gpar(fontsize = 8),
+#                                                                           title_gp = gpar(fontsize = 10, fontface = "plain"))))
+
+
