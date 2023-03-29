@@ -26,17 +26,18 @@ enddark <- as.numeric(sub(".*\\.","0.",sprintf("%.10f", round(enddark,10)) ))
 #             Function to calculate decimalDay from Posix data                 #
 #------------------------------------------------------------------------------#
 # can calculate the decimal day of date data but also datehour data
+
 decimalDay <- function(column){
-  column <- as.POSIXct(strptime(column, format= "%d/%m/%Y",tz = "UTC"))
-  if(all(is.na(column))){
-    column = as.POSIXct(strptime(column,format= "%Y-%m-%d %H:%M:%S", tz = "UTC")) # now the date/hour is not changing
+  input <- as.POSIXct(strptime(column, format= "%d/%m/%Y",tz = "UTC"))
+  if(all(is.na(input))){
+    input = as.POSIXct(strptime(column,format= "%Y-%m-%d %H:%M:%S", tz = "UTC")) # now the date/hour is not changing
   }
-  column <- as.numeric(strftime(column, format = "%j", 
-                                          tz='UTC')) + (as.numeric(strftime(column, format = "%H", tz='UTC'))/(24)) +
-    (as.numeric(strftime(column, format = "%M", tz='UTC'))/(24*60)) +
-    (as.numeric(strftime(column, format = "%S", tz='UTC'))/(24*60*60)) 
+  output <- as.numeric(strftime(input, format = "%j", 
+                                          tz='UTC')) + (as.numeric(strftime(input, format = "%H", tz='UTC'))/(24)) +
+    (as.numeric(strftime(input, format = "%M", tz='UTC'))/(24*60)) +
+    (as.numeric(strftime(input, format = "%S", tz='UTC'))/(24*60*60)) 
   
-  return(column)
+  return(output)
 }
 
 
