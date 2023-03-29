@@ -81,8 +81,9 @@ set_constants_C2M47 <- function ()
   # End of the proper experiment (d)
   Time_end_exp <- Time_setup + 8
   
-
-
+  # time in UTC when the light was switched off and the darkperiod starts (HH:MM:SS)
+  lightsOFF <-  "06:00:00" 
+  
   # Duration covering the rapid stomatal movements at the transitions (min)
   # Corresponds here to the first data point after a day/night transition.
   Rapid_dur <- 30
