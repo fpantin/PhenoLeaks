@@ -21,6 +21,18 @@ darkperiod <- (24-Pho_Per) / 24
 startdark <- as.numeric(round(OFF,10))
 enddark <- startdark + darkperiod
 enddark <- as.numeric(sub(".*\\.","0.",sprintf("%.10f", round(enddark,10)) ))
+# test whether "night" is during the normal night or inversed (during the day)
+if (startdark + darkperiod < 1){
+  enddark = startdark + darkperiod  # day and night inversed
+  night = "inversed"
+}else{
+  enddark = startdark + darkperiod -1
+  night = "normal"
+}
+
+ylab_tr = expression(paste("E"["rosette"], " (mmol m"^-2, " s"^-1, ")"))
+ylab_tr_vpd = expression(paste("E"["rosette"], " (mmol m"^-2, " s"^-1, " KPa"^-1,")"))
+
 
 #------------------------------------------------------------------------------#
 #             Function to calculate decimalDay from Posix data                 #
@@ -40,6 +52,22 @@ decimalDay <- function(column){
   return(output)
 }
 
+#------------------------------------------------------------------------------#
+#                       Add rectangle to figures                               #
+#------------------------------------------------------------------------------#
+
+rectangle <- function(){
+  # function to add rectangles to the plot
+  days <- seq(min(unique(as.integer(x))),max(unique(as.integer(x))),1) 
+  days = c(days,(min(days)-1),(max(days)+1))
+  
+  for (i in days){
+    # i = 179
+    rect(xleft= i + startdark, xright= i + startdark + darkperiod, ybottom= min(y,na.rm = T), ytop= max(y,na.rm = T), density= NULL, col= color[1], border = NA)
+    
+  }
+  
+}
 
 #------------------------------------------------------------------------------#
 #             Function to test whether a vector with decimalDays               #  
@@ -158,8 +186,8 @@ surface_add <- function(input){
     }
     
   }
-  print(unique(no_surf))
-  print(length(unique(no_surf)))
+  #print(unique(no_surf))
+  #print(length(unique(no_surf)))
   
   return(input)
 }
