@@ -21,6 +21,8 @@ darkperiod <- (24-Pho_Per) / 24
 startdark <- as.numeric(round(OFF,10))
 enddark <- startdark + darkperiod
 enddark <- as.numeric(sub(".*\\.","0.",sprintf("%.10f", round(enddark,10)) ))
+color <- c(rgb(0, 32, 96, alpha=75, maxColorValue=255),rgb(255, 192, 0, alpha=70, maxColorValue=255)) # night/day
+
 # test whether "night" is during the normal night or inversed (during the day)
 if (startdark + darkperiod < 1){
   enddark = startdark + darkperiod  # day and night inversed
@@ -56,7 +58,7 @@ decimalDay <- function(column){
 #                       Add rectangle to figures                               #
 #------------------------------------------------------------------------------#
 
-rectangle <- function(){
+rectangle <- function(x,y){
   # function to add rectangles to the plot
   days <- seq(min(unique(as.integer(x))),max(unique(as.integer(x))),1) 
   days = c(days,(min(days)-1),(max(days)+1))
