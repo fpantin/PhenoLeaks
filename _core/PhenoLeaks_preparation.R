@@ -103,22 +103,22 @@ dd_light <- function(dd){
 #             Function to test the best fit model to describe plant growth     #
 #------------------------------------------------------------------------------#
 
-# This function need a dataframe including "idPotManip", "outlier" (identified before manually), 
+# This function need a dataframe including "idPot", "outlier" (identified before manually), 
 # "Areamm2", "decimalDay".
 
 surf_fit <- function(surface){
   
-  surf_coef <- data.frame(idPotManip = NULL, model = NULL,growth = NULL, from = NULL,
+  surf_coef <- data.frame(idPot = NULL, model = NULL,growth = NULL, from = NULL,
                           to = NULL, intercept = NULL, slope = NULL)
   
   mod = "test"
   growth = "continu"
   
-  for (i in unique(surface$idPotManip)){
+  for (i in unique(surface$idPot)){
     # i = "C2M43-93"
     
     model = mod
-    input = surface[surface$idPotManip == i & !surface$outlier,]
+    input = surface[surface$idPot == i & !surface$outlier,]
     # plot(Areamm2~decimalDay, data = input)
     
     
@@ -145,7 +145,7 @@ surf_fit <- function(surface){
         }
       }
       
-      surf_coef <- rbind(surf_coef,data.frame(idPotManip = i, model = model,growth = growth, from = min(input$decimalDay), to = max(input$decimalDay), intercept = as.numeric(lm$coefficients[1]), slope = as.numeric(lm$coefficients[2])))
+      surf_coef <- rbind(surf_coef,data.frame(idPot = i, model = model,growth = growth, from = min(input$decimalDay), to = max(input$decimalDay), intercept = as.numeric(lm$coefficients[1]), slope = as.numeric(lm$coefficients[2])))
       
     }
   }
@@ -162,26 +162,26 @@ surf_fit <- function(surface){
 surface_add <- function(input){
   input$surface <- 0
   no_surf <- c()
-  for (i in unique(input$idPotManip)){
+  for (i in unique(input$idPot)){
     
-    if(i %in% unique(surf_coef$idPotManip)){
+    if(i %in% unique(surf_coef$idPot)){
       i = as.character(i)
       
-      mod <- surf_coef$model[surf_coef$idPotManip == i & surf_coef$growth == "continu"]
+      mod <- surf_coef$model[surf_coef$idPot == i & surf_coef$growth == "continu"]
       
-      slope = surf_coef$slope[surf_coef$idPotManip == i & surf_coef$growth == "continu"]
+      slope = surf_coef$slope[surf_coef$idPot == i & surf_coef$growth == "continu"]
       
-      intercept = surf_coef$intercept[surf_coef$idPotManip == i & surf_coef$growth == "continu"]
+      intercept = surf_coef$intercept[surf_coef$idPot == i & surf_coef$growth == "continu"]
       
       if (mod == "lm"){
         
-        input$surface[input$idPotManip == i] <- intercept +  input$decimalDay[input$idPotManip == i] * slope
+        input$surface[input$idPot == i] <- intercept +  input$decimalDay[input$idPot == i] * slope
       }
       if (mod == "log"){
-        input$surface[input$idPotManip == i] <- exp(intercept +  input$decimalDay[input$idPotManip == i] * slope)
+        input$surface[input$idPot == i] <- exp(intercept +  input$decimalDay[input$idPot == i] * slope)
       }
     }else{
-      input$surface[input$idPotManip == i] <- NA
+      input$surface[input$idPot == i] <- NA
       no_surf <- c(no_surf,i)
     }
     
