@@ -65,6 +65,12 @@ set_constants_C2M47 <- function ()
   # Duration of the photoperiod (h)
   Pho_Per <- 12
   
+  # Start of the gravimetric experiment (YY-MM-DD HH:MM:SS)
+  from <- "2019-02-28 16:00:00"
+  
+  # End of the gravimetric experiment (YY-MM-DD HH:MM:SS)
+  to <- "2019-03-08 23:00:00"
+  
   # Duration of the skotoperiod (h)
   # Note that the scripts will not work for diel cycles that do not match 24 h.
   Sko_Per <- 24 - Pho_Per
