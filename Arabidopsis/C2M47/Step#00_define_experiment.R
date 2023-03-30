@@ -59,6 +59,9 @@ source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
 
 set_constants_C2M47 <- function ()
   {
+  # Plant species
+  spcs <- "Arabidopsis"
+  
   # Name of the experiment
   idExp <- "C2M47"
 
