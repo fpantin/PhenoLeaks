@@ -19,7 +19,7 @@
 
 
 #options(repos = "https://cran.rstudio.com/") # RStudio
-for (pkg in c("scales"))
+for (pkg in c("scales", "here"))
   {
   if (!pkg %in% installed.packages()[, "Package"]) { install.packages(pkg) }
   #update.packages(pkg)
@@ -35,9 +35,8 @@ for (pkg in c("scales"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-# Note that the working directory is expected to be the one of the PhenoLeaks project directory,
-# e.g. in RStudio: Session > Set Working Directory > To Project Directory
-dir_PhenoLeaks <- file.path(getwd(), "_core")
+# Note that paths are built relative to the root directory of the PhenoLeaks project.
+dir_PhenoLeaks <- here::here("_core")
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_outliers.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_graphics.R"))
@@ -50,15 +49,24 @@ source(file.path(dir_PhenoLeaks, "PhenoLeaks_graphics.R"))
 #                                                                              #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
+# Here the file "Step#00_define_experiment.R" should be sourced.
 
-source(file.path(getwd(), "Arabidopsis", idExp, "Step#00_define_experiment.R"))
+  ## OPTION 1: open the file and source it manually
 
-# To check the constants, run:
+  ## OPTION 2: set the correct file path and source it from this script, e.g.:
+  source(file.path(here::here(), "Arabidopsis", "C2M47", "Step#00_define_experiment.R"))
+
+# Now the species and ID of the experiment can be found by entering:
+#c(spcs, idExp)
+
+# so that the directory of the experiment is now explicitly defined as:
+dir_Exp <- file.path(here::here(), spcs, idExp)
+
+# To check all constants, enter:
 #set_constants_C2M47()
 
 # To check the colors, enter:
 #set_colors_C2M47()
-
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -75,7 +83,7 @@ source(file.path(getwd(), "Arabidopsis", idExp, "Step#00_define_experiment.R"))
 
 # Transpiration data
 # calculated from "cleaned_outliers.csv" and "Transpiration_calculations_v2.Rmd"
-df <- read.csv(file.path(getwd(), "Arabidopsis", idExp, "Processed_data", "C2M47_starch_pot_transpiration_SWC.csv"))
+df <- read.csv(file.path(dir_Exp, "Processed_data", "C2M47_starch_pot_transpiration_SWC.csv"))
 df <- df[, c("idPot", "idGenotype", "idWatering", "decimalDay", "E_mmol_per_m2_s", "meanVPD", "E_mmol_per_m2_s_kPa", "SWC")]
 
 # Format the dataframe with a uniform time sequence for all pots (if not done at Step#01, add lines and print warning messages)
@@ -90,8 +98,8 @@ df$Trt <- paste(df$idGenotype, df$idWatering, sep = " - ")
 #                       Plot kinetics of individual pots                       #
 #------------------------------------------------------------------------------#
 
-if (!dir.exists(file.path(getwd(), "Arabidopsis", idExp, "Figures"))) { dir.create(file.path(getwd(), "Arabidopsis", idExp, "Figures")) }
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#02a_plot_all_pots.pdf", sep = "_")), width = 10, height = 5)
+if (!dir.exists(file.path(dir_Exp, "Figures"))) { dir.create(file.path(dir_Exp, "Figures")) }
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02a_plot_all_pots.pdf", sep = "_")), width = 10, height = 5)
 for (irr in c("WW", "WS"))
   {
   for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
@@ -112,7 +120,7 @@ for (irr in c("WW", "WS"))
 dev.off()
 
 
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#02b_plot_all_pots_per_condition.pdf", sep = "_")), width = 10, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02b_plot_all_pots_per_condition.pdf", sep = "_")), width = 10, height = 5)
 n.max <- max(aggregate(df$idPot[!duplicated(df$idPot)], by = list(df$Trt[!duplicated(df$idPot)]), FUN = length)$x) # maximum number of replicates per treatment
 for (irr in c("WW", "WS"))
   {
@@ -262,7 +270,7 @@ df <- detect_outliers(df,
 hist(df$sum_out)
 
 # Visualize individual curves with outliers
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#02c_visualize_potential_outliers_all_pots.pdf", sep = "_")), width = 10, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02c_visualize_potential_outliers_all_pots.pdf", sep = "_")), width = 10, height = 5)
 for (irr in c("WW", "WS"))
   {
   for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
@@ -338,7 +346,7 @@ df$E_estimate_per_kPa <- df$E_estimate / df$meanVPD
 #require(ggplot2)
 #require(ggpmisc)
   
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#02d_check_transition_estimates.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02d_check_transition_estimates.pdf", sep = "_")), width = 8, height = 5)
 
 maxi <- max(c(df$E_clean[!is.na(df$E_estimate)], df$E_estimate), na.rm = T)
 
@@ -381,7 +389,7 @@ dev.off()
 #------------------------------------------------------------------------------#
   
 # Visualize individual curves with outliers and transition estimates
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#02e_visualize_corrected_data_all_pots.pdf", sep = "_")), width = 10, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02e_visualize_corrected_data_all_pots.pdf", sep = "_")), width = 10, height = 5)
 for (irr in c("WW", "WS"))
   {
   for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
@@ -432,6 +440,6 @@ df$E_corr_per_kPa[is.na(df$E_corr_per_kPa)] <- df$E_estimate_per_kPa[is.na(df$E_
 
 # Save the results in 'E_corr.csv'
 df.save <- df[, c("Trt", "idGenotype", "idWatering", "idPot", "Time", "Exact_Time_min", "SWC", "E_mmol_per_m2_s", "E_clean", "E_estimate", "E_corr", "meanVPD", "E_mmol_per_m2_s_kPa", "E_clean_per_kPa", "E_estimate_per_kPa", "E_corr_per_kPa")]
-if (!dir.exists(file.path(getwd(), "Arabidopsis", idExp, "Corrected_data"))) { dir.create(file.path(getwd(), "Arabidopsis", idExp, "Corrected_data")) }
-write.csv(df.save, file.path(getwd(), "Arabidopsis", idExp, "Corrected_data", "E_corr.csv"), row.names = F)
+if (!dir.exists(file.path(dir_Exp, "Corrected_data"))) { dir.create(file.path(dir_Exp, "Corrected_data")) }
+write.csv(df.save, file.path(dir_Exp, "Corrected_data", "E_corr.csv"), row.names = F)
 

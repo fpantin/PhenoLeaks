@@ -19,7 +19,7 @@
 
 
 #options(repos = "https://cran.rstudio.com/") # RStudio
-for (pkg in c("igraph"))
+for (pkg in c("igraph", "here"))
   {
   if (!pkg %in% installed.packages()[, "Package"]) { install.packages(pkg) }
   #update.packages(pkg)
@@ -36,9 +36,8 @@ for (pkg in c("igraph"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-# Note that the working directory is expected to be the one of the PhenoLeaks project directory,
-# e.g. in RStudio: Session > Set Working Directory > To Project Directory
-dir_PhenoLeaks <- file.path(getwd(), "_core")
+# Note that paths are built relative to the root directory of the PhenoLeaks project.
+dir_PhenoLeaks <- here::here("_core")
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
 
 
@@ -68,10 +67,10 @@ set_constants_C2M47 <- function ()
   # Duration of the photoperiod (h)
   Pho_Per <- 12
   
-  # Start of the gravimetric experiment (YY-MM-DD HH:MM:SS)
+  # Start of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
   from <- "2019-02-28 16:00:00"
   
-  # End of the gravimetric experiment (YY-MM-DD HH:MM:SS)
+  # End of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
   to <- "2019-03-08 23:00:00"
   
   # Duration of the skotoperiod (h)
@@ -191,21 +190,26 @@ c(ColorsTrt, ColorsPeriod) := set_colors_C2M47()
 #                             Check irrigation data                            #
 #------------------------------------------------------------------------------#
 
-# Import and manage irrigation data
-irrig <- read.csv(file.path(getwd(), "Arabidopsis", idExp, "Processed_data", "C2M47_starch_irrigations.csv"))
-irrig$idPot <- sub("C2M47-", "", irrig$idPotManip) ################
-irrig <- irrig[order(irrig$idPot, irrig$decimalDay), ]
+irrig_file <- file.path(getwd(), spcs, idExp, "Processed_data", "C2M47_starch_irrigations.csv")
+if (file.exists(irrig_file))
+  {
+  # Import and manage irrigation data
+  irrig <- read.csv(irrig_file)
+  irrig$idPot <- sub("C2M47-", "", irrig$idPot)#################
+  irrig <- irrig[order(irrig$idPot, irrig$decimalDay), ]
+  
+  # Check the number of irrigation events for each pot
+  aggregate(list(N = irrig$decimalDay), by = list(idPot = irrig$idPot), FUN = length)
+  # --> Variable, between 1 and 4 irrigation events depending on the pot (and not the treatment)
+  #     It would therefore be confusing to plot an average time per experiment or per condition.
+  
+  # Nonetheless, many pots were irrigated on day 1 and all pots on day 3 in the morning:
+  #hist(irrig$decimalDay - Time_ON0)
+  # So for convenience we define a rough 'mean_irrig_time'
+  mean_irrig_time <- c(1, 3) + mean(irrig$decimalDay - Time_ON0 - round(irrig$decimalDay - Time_ON0)) + Time_ON0
+  # that will be avoided unless it can be specified in the figure legend that it is an approximation of the reality.
+  }
 
-# Check the number of irrigation events for each pot
-aggregate(list(N = irrig$decimalDay), by = list(idPot = irrig$idPot), FUN = length)
-# --> Variable, between 1 and 4 irrigation events depending on the pot (and not the treatment)
-#     It would therefore be confusing to plot an average time per experiment or per condition.
-
-# Nonetheless, many pots were irrigated on day 1 and all pots on day 3 in the morning:
-#hist(irrig$decimalDay - Time_ON0)
-# So for convenience we define a rough 'mean_irrig_time'
-mean_irrig_time <- c(1, 3) + mean(irrig$decimalDay - Time_ON0 - round(irrig$decimalDay - Time_ON0)) + Time_ON0
-# that will be avoided unless it can be specified in the figure legend that it is an approximation of the reality.
 
 #------------------------------------------------------------------------------#
 #                        Depict environmental conditions                       #
@@ -266,7 +270,7 @@ rectangles_environment_C2M47 <- function (col.per = ColorsPeriod, # the datafram
   t.recovery <- 5 + if (Time_var == "decimalDay") Time_ON0 else 0
   if (t.recovery > usr[1] & t.recovery < usr[2]) text(t.recovery, y.text, "Recovery", cex = cex.env, xpd = T, col = "white")
   
-  if (irrig_show_mode != "none")
+  if (irrig_show_mode != "none" & file.exists(irrig_file))
     {
     if (irrig_show_mode == "mean") t_irrig <- mean_irrig_time
     else if (irrig_show_mode == "pot") t_irrig <- irrig$decimalDay[irrig$idPot == pot]

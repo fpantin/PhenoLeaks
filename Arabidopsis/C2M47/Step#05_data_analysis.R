@@ -19,7 +19,7 @@
 
 
 #options(repos = "https://cran.rstudio.com/") # RStudio
-for (pkg in c("gplots"))
+for (pkg in c("gplots", "here"))
   {
   if (!pkg %in% installed.packages()[, "Package"]) { install.packages(pkg) }
   #update.packages(pkg)
@@ -43,9 +43,8 @@ for (pkg in c("gplots"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-# Note that the working directory is expected to be the one of the PhenoLeaks project directory,
-# e.g. in RStudio: Session > Set Working Directory > To Project Directory
-dir_PhenoLeaks <- file.path(getwd(), "_core")
+# Note that paths are built relative to the root directory of the PhenoLeaks project.
+dir_PhenoLeaks <- here::here("_core")
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_graphics.R"))
 
@@ -58,9 +57,20 @@ source(file.path(dir_PhenoLeaks, "PhenoLeaks_graphics.R"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-source(file.path(getwd(), "Arabidopsis", idExp, "Step#00_define_experiment.R"))
+# Here the file "Step#00_define_experiment.R" should be sourced.
 
-# To check the constants, run:
+  ## OPTION 1: open the file and source it manually
+
+  ## OPTION 2: set the correct file path and source it from this script, e.g.:
+  source(file.path(here::here(), "Arabidopsis", "C2M47", "Step#00_define_experiment.R"))
+
+# Now the species and ID of the experiment can be found by entering:
+#c(spcs, idExp)
+
+# so that the directory of the experiment is now explicitly defined as:
+dir_Exp <- file.path(here::here(), spcs, idExp)
+
+# To check all constants, enter:
 #set_constants_C2M47()
 
 # To check the colors, enter:
@@ -80,8 +90,8 @@ source(file.path(getwd(), "Arabidopsis", idExp, "Step#00_define_experiment.R"))
 #------------------------------------------------------------------------------#
 
 # Import data
-#res <- read.csv(file.path(getwd(), "Arabidopsis", idExp, "Fitted_data", "results_fit_use_VPD.csv"))
-res <- read.csv(file.path(getwd(), "Arabidopsis", idExp, "Fitted_data", "results_fit_acclim.csv"))
+#res <- read.csv(file.path(dir_Exp, "Fitted_data", "results_fit_use_VPD.csv"))
+res <- read.csv(file.path(dir_Exp, "Fitted_data", "results_fit_acclim.csv"))
 res <- cbind(data.frame(idExperiment = idExp), res)
 
 # Back to 'idPeriod' former name (for compatibility)
@@ -143,7 +153,7 @@ plot_geno_PDF <- function (GEN_SELECT, GENO_LABELS, gen_file,
                            PERIOD_FIT_LABELS = c("Control", "High CO2", "Low light", "Recovery"),
                            PERIOD_ACCLIM_LABELS = c("High CO2", "Low light", "Recovery 1"))
   {
-  pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "_Step#05a_stat_", gen_file, ".pdf", sep = "")), width = 8, height = 5)
+  pdf(file.path(dir_Exp, "Figures", paste(idExp, "_Step#05a_stat_", gen_file, ".pdf", sep = "")), width = 8, height = 5)
   
   c(myplots1, VAR_all) := anova_batch(res,
                                       anova_jitter_function = anova2_jitter,
@@ -292,7 +302,7 @@ PPTX_stat_main <- function (gen_file)
                      myplots1[[which(VAR_all == "Sigma_preop_obs")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
                      ncol = 4, nrow = 2, common.legend = T, align = "v")
   print(myfig)
-  graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
+  graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
   dev.off()
   }
 
@@ -313,7 +323,7 @@ PPTX_stat_suppl <- function (gen_file)
                      myplots1[[which(VAR_all == "Delta_night_obs")]],
                      ncol = 4, nrow = 3, common.legend = T, align = "v")
   print(myfig)
-  graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_suppl_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 4-0.3)
+  graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "_stat_suppl_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 4-0.3)
   dev.off()
   }
 
@@ -354,7 +364,7 @@ ggarrange(myplots1[[which(VAR_all == "A_rapid_op_obs")]] + theme(plot.margin = u
           myplots1[[which(VAR_all == "Sigma_preclo_obs")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           myplots1[[which(VAR_all == "Sigma_preop_obs")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           ncol = 2, nrow = 3, common.legend = T, align = "v")
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, "_obs.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5/2, height = 4-0.3)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, "_obs.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5/2, height = 4-0.3)
 dev.off()
 
 dev.new(width = 6.5, height = (4-0.3)*2/3, unit = "in", noRStudioGD = T)
@@ -367,7 +377,7 @@ ggarrange(myplots1[[which(VAR_all == "E_diel_obs")]],
           myplots1[[which(VAR_all == "sigma_night_obs")]],
           myplots1[[which(VAR_all == "Delta_night_obs")]],
           ncol = 4, nrow = 2, common.legend = T, align = "v")
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_suppl_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "_stat_suppl_", gen_file, ".pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
 dev.off()
 
 dev.new(width = 6.5, height = (4-0.3)*2/3, unit = "in", noRStudioGD = T)
@@ -380,7 +390,7 @@ ggarrange(myplots2[[which(VAR_common_fit == "E_mean")]] + theme(plot.margin = un
           myplots2[[which(VAR_common_fit == "phi2")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           myplots1[[which(VAR_all == "Sigma_preop_mod")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           ncol = 4, nrow = 2, common.legend = T, align = "v")
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, "_fit.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "_stat_main_", gen_file, "_fit.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = (4-0.3)*2/3)
 dev.off()
 
 
@@ -548,7 +558,7 @@ c(myplots_acclim, VAR_acclim) := anova_batch(res,
 # The code is commented to secure the pptx file (manual step above)
 #dev.new(width = 6.5, height = 4.5, unit = "in", noRStudioGD = T)
 #myplots_acclim 
-#graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_acclim.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 4.5)
+#graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "_stat_acclim.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 4.5)
 #dev.off()
 
 
@@ -557,7 +567,7 @@ c(myplots_acclim, VAR_acclim) := anova_batch(res,
 #------------------------------------------------------------------------------#
 
 # Plot all variables in a PDF file
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#05b_stat_irrigation_Col_pgm.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#05b_stat_irrigation_Col_pgm.pdf", sep = "_")), width = 8, height = 5)
   
   c(myplots1, VAR_all) := anova_batch(res,
                                       anova_jitter_function = anova3_jitter,
@@ -653,7 +663,7 @@ ggarrange(myplots2[[which(VAR_common_fit == "E_mean")]] + theme(plot.margin = un
           myplots2[[which(VAR_common_fit == "A2")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           myplots2[[which(VAR_common_fit == "phi2")]] + theme(plot.margin = unit(c(0,1,0,13), "points")),
           ncol = 2, nrow = 3, common.legend = T, align = "v")
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "_stat_irrigation_Col_pgm.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 6)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "_stat_irrigation_Col_pgm.pptx", sep = "")), paper = "A4", orient = "portrait", width = 6.5, height = 6)
 dev.off()
 
 res$idWatering[res$idWatering == "Well-watered"] <- "WW"
@@ -822,7 +832,7 @@ res$idWatering[res$idWatering == "Water stress"] <- "WS"
 #                #row_gap = unit(c(2, 4, 2), "pt"), column_gap = unit(c(2, 4, 2), "pt"),
 #                row_title = NULL, column_title = NULL)
 # 
-# pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#05d_heatmap_WW.pdf", sep = "_")), width = 6.5, height = 7.5)
+# pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#05d_heatmap_WW.pdf", sep = "_")), width = 6.5, height = 7.5)
 # draw(hmp, heatmap_legend_side = "top")
 # dev.off()
 # 

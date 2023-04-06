@@ -18,13 +18,13 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-# #options(repos = "https://cran.rstudio.com/") # RStudio
-# for (pkg in c("")) # <---- add additional packages here if required
-#   {
-#   if (!pkg %in% installed.packages()[, "Package"]) { install.packages(pkg) }
-#   #update.packages(pkg)
-#   library(pkg, character.only = T)
-#   }
+#options(repos = "https://cran.rstudio.com/") # RStudio
+for (pkg in c("here"))
+  {
+  if (!pkg %in% installed.packages()[, "Package"]) { install.packages(pkg) }
+  #update.packages(pkg)
+  library(pkg, character.only = T)
+  }
 
 
 
@@ -35,9 +35,8 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-# Note that the working directory is expected to be the one of the PhenoLeaks project directory,
-# e.g. in RStudio: Session > Set Working Directory > To Project Directory
-dir_PhenoLeaks <- file.path(getwd(), "_core")
+# Note that paths are built relative to the root directory of the PhenoLeaks project.
+dir_PhenoLeaks <- here::here("_core")
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_graphics.R"))
 
@@ -50,9 +49,20 @@ source(file.path(dir_PhenoLeaks, "PhenoLeaks_graphics.R"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-source(file.path(getwd(), "Arabidopsis", idExp, "Step#00_define_experiment.R"))
+# Here the file "Step#00_define_experiment.R" should be sourced.
 
-# To check the constants, run:
+  ## OPTION 1: open the file and source it manually
+
+  ## OPTION 2: set the correct file path and source it from this script, e.g.:
+  source(file.path(here::here(), "Arabidopsis", "C2M47", "Step#00_define_experiment.R"))
+
+# Now the species and ID of the experiment can be found by entering:
+#c(spcs, idExp)
+
+# so that the directory of the experiment is now explicitly defined as:
+dir_Exp <- file.path(here::here(), spcs, idExp)
+
+# To check all constants, enter:
 #set_constants_C2M47()
 
 # To check the colors, enter:
@@ -73,7 +83,7 @@ source(file.path(getwd(), "Arabidopsis", idExp, "Step#00_define_experiment.R"))
 
 
 # Import corrected transpiration data
-df <- read.csv(file.path(getwd(), "Arabidopsis", idExp, "Corrected_data", "E_corr.csv"))
+df <- read.csv(file.path(dir_Exp, "Corrected_data", "E_corr.csv"))
 
 # Keep only the time interval that will be used for averaging
 df <- df[df$Time >= Time_start_exp, ]
@@ -92,7 +102,7 @@ Tr.avg <- compute_avg(df, E_var = "E_corr", Trt_var = "Trt")
 Tr.avg <- offset_avg(df, Tr.avg, interval_est = 0.15)
 
 # Show the correction in a PDF file
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#03a_plot_missing_data_correction.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#03a_plot_missing_data_correction.pdf", sep = "_")), width = 8, height = 5)
 par(mfrow = c(2, 1), oma = c(0, 0, 2, 10))
 for (trt in sort(unique(df$Trt)))
   {
@@ -114,7 +124,7 @@ for (trt in sort(unique(df$Trt)))
 dev.off()
 
 # Save the results
-write.csv(Tr.avg, file.path(getwd(), "Arabidopsis", idExp, "Corrected_data", "E_corr_offset_avg.csv"), row.names = F)
+write.csv(Tr.avg, file.path(dir_Exp, "Corrected_data", "E_corr_offset_avg.csv"), row.names = F)
 
 
 ## 2 - Data normalized by the VPD
@@ -129,7 +139,7 @@ Tr.avg.kPa <- offset_avg(df, Tr.avg.kPa, interval_est = 0.15)
 Tr.avg.kPa <- append_VPD_avg(df, Tr.avg.kPa)
 
 # Show the correction in a PDF file
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#03b_plot_missing_data_correction_use_VPD.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#03b_plot_missing_data_correction_use_VPD.pdf", sep = "_")), width = 8, height = 5)
 par(mfrow = c(2, 1), oma = c(0, 0, 2, 10))
 for (trt in sort(unique(df$Trt)))
   {
@@ -152,7 +162,7 @@ dev.off()
 
 
 # Save the results
-write.csv(Tr.avg.kPa, file.path(getwd(), "Arabidopsis", idExp, "Corrected_data", "E_corr_per_kPa_offset_avg.csv"), row.names = F)
+write.csv(Tr.avg.kPa, file.path(dir_Exp, "Corrected_data", "E_corr_per_kPa_offset_avg.csv"), row.names = F)
 
 
 #------------------------------------------------------------------------------#
@@ -166,7 +176,7 @@ MAR <- c(2.5, 3.5, 0.5, 3.5)
 
 ## 1 - Non-normalized data
 
-# pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#03c_plot_average_per_condition.pdf", sep = "_")), width = 8, height = 5)
+# pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#03c_plot_average_per_condition.pdf", sep = "_")), width = 8, height = 5)
 # plot_avg_kin(Tr.avg, c("Col-0 - WW", "Col-0 ProStarv::LUC - WW"), text.legend = c("Col-0", "Col-0*"), idExperiment = idExp, xlim = XLIM, ylim = YLIM)
 # plot_avg_kin(Tr.avg, c("Col-0 - WW", "pgm-1 - WW"), text.legend = c("Col-0", expression(italic("pgm"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM)
 # plot_avg_kin(Tr.avg, c("Col-0 - WW", "sex1-3 - WW"), text.legend = c("Col-0", expression(italic("sex1"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM)
@@ -194,7 +204,7 @@ common.args <- list(avg_dat = Tr.avg,
                     idExperiment = idExp,
                     xlim = XLIM, ylim = YLIM, mar = MAR)
 
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#03c_plot_average_per_condition.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#03c_plot_average_per_condition.pdf", sep = "_")), width = 8, height = 5)
 
 do.call(plot_avg_kin, append(common.args, list(treatments =  c("Col-0 - WW", "Col-0 ProStarv::LUC - WW"),
                                                text.legend = c("Col-0", expression("Col-0"^"†")))))
@@ -246,79 +256,79 @@ dev.off()
 
 wd <- 6.5 # fig width
 ht <- 2 # fig height
-if (!dir.exists(file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX"))) { dir.create(file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX")) }
+if (!dir.exists(file.path(dir_Exp, "Figures", "PPTX"))) { dir.create(file.path(dir_Exp, "Figures", "PPTX")) }
 
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "pgm-1 - WW"), text.legend = c("Col-0", expression(italic("pgm"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_x_axis = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_pgm.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_pgm.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "sex1-3 - WW"), text.legend = c("Col-0", expression(italic("sex1"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_sex1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_sex1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 ProStarv::LUC - WW", "isa1-1 ProStarv::LUC - WW"), text.legend = c(expression("Col-0"^"†"), expression(italic("isa1")^"†")), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_x_axis = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_isa1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_isa1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 ProStarv::LUC - WW", "ss4-3 ProStarv::LUC - WW"), text.legend = c(expression("Col-0"^"†"), expression(italic("ss4")^"†")), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_ss4.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_ss4.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "mex1-1 - WW"), text.legend = c("Col-0", expression(italic("mex1"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_x_axis = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_mex1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_mex1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "dpe1-2 - WW"), text.legend = c("Col-0", expression(italic("dpe1"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_x_axis = F, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_dpe1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_dpe1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "dpe2-5 - WW"), text.legend = c("Col-0", expression(italic("dpe2"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_dpe2.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_dpe2.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "pgi1-1 - WW"), text.legend = c("Col-0", expression(italic("pgi"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_x_axis = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_pgi.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_pgi.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "amy3-2 bam1 - WW"), text.legend = c("Col-0", expression(italic("amy3 bam1"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_x_axis = F, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_amy3 bam1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_amy3 bam1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "bam1bam3 - WW"), text.legend = c("Col-0", expression(italic("bam1 bam3"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_bam1 bam3.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_bam1 bam3.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "amy3-2 - WW"), text.legend = c("Col-0", expression(italic("amy3"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_x_axis = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_amy3.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_amy3.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "bam1 - WW"), text.legend = c("Col-0", expression(italic("bam1"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_x_axis = F, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_bam1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_bam1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "bam3 - WW"), text.legend = c("Col-0", expression(italic("bam3"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_bam3.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_bam3.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "abcb14-1 - WW"), text.legend = c("Col-0", expression(paste(italic("abcb14"), "-1", sep = ""))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_x_axis = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_abcb14-1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_abcb14-1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "abcb14-2 - WW"), text.legend = c("Col-0", expression(paste(italic("abcb14"), "-2", sep = ""))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_rect_env = F)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_abcb14-2.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_abcb14-2.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 
 # Zoom into the first complete diel cycle for Col-0, pgm and sex1 (for publication)
 dev.new(width = 3, height = 2.7, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "pgm-1 - WW", "sex1-3 - WW"), text.legend = c("Col-0", expression(italic("pgm")), expression(italic("sex1"))), idExperiment = idExp, xlim = c(0, 1), ylim = c(0.65, 1.87), export_PPTX = T, draw_x_axis = T, x_axis_unit = "hours", xlab = "Time (h)", draw_rect_env = T, x.legend = 0.6)
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin zoom_pgm_sex1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = 3, height = 2.7)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin zoom_pgm_sex1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = 3, height = 2.7)
 dev.off()
 
 
@@ -332,7 +342,7 @@ common.args <- list(avg_dat = Tr.avg.kPa,
                     idExperiment = idExp,
                     xlim = XLIM, ylim = YLIM, mar = MAR)
 
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#03d_plot_average_per_condition_use_VPD.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#03d_plot_average_per_condition_use_VPD.pdf", sep = "_")), width = 8, height = 5)
 
 do.call(plot_avg_kin, append(common.args, list(treatments =  c("Col-0 - WW", "Col-0 ProStarv::LUC - WW"),
                                                text.legend = c("Col-0", expression("Col-0"^"†")))))
@@ -403,7 +413,7 @@ common.args <- list(avg_dat = Tr.avg,
                     x.legend = X.LEGEND, y.legend = Y.LEGEND,
                     color_E_by_SWC = T, col_by_SWC = c("black", "black"), lty_by_SWC = c(1, 3))
 
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#03e_plot_average_per_condition_use_SWC.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#03e_plot_average_per_condition_use_SWC.pdf", sep = "_")), width = 8, height = 5)
 do.call(plot_avg_kin, append(common.args, list(treatments = c("Col-0 - WW", "Col-0 - WS"),
                                                title_by_SWC = "Col-0",
                                                text.legend = c("well-watered (n = 8)", "stable water stress (n = 8)"))))
@@ -422,7 +432,7 @@ plot_avg_kin(Tr.avg, c("Col-0 - WW", "Col-0 - WS"), text.legend = c("Col-0 - sta
              idExperiment = idExp, xlim = c(-0.7, 5.9), ylim = c(0, 2.4), export_PPTX = T, draw_x_axis = F,
              color_E_by_SWC = T, col_by_SWC = c("black", "black"), lty_by_SWC = c(1, 4), title_by_SWC = "Experiment #4",#"Col-0",
              scale_bar_pos_by_SWC = c(-0.6, 0.3), cex.legend = 0.6, x.legend = 2.75, y.legend = 2.2, irrig_show_mode = "mean")
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_WS_Col.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_WS_Col.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("pgm-1 - WW", "pgm-1 - WS"), text.legend = c(expression(paste(italic("pgm"), " - stable well-watered regime (n = 8)", sep = "")),
@@ -430,7 +440,7 @@ plot_avg_kin(Tr.avg, c("pgm-1 - WW", "pgm-1 - WS"), text.legend = c(expression(p
              idExperiment = idExp, xlim = c(-0.7, 5.9), ylim = c(0, 2.4), export_PPTX = T, draw_x_axis = F,
              color_E_by_SWC = T, col_by_SWC = c("black", "black"), lty_by_SWC = c(1, 4), title_by_SWC = "Experiment #4",#expression(italic("pgm")),
              scale_bar_pos_by_SWC = c(-0.6, 0.3), cex.legend = 0.6, x.legend = 2.75, y.legend = 2.2, irrig_show_mode = "mean")
-graph2ppt(file = file.path(getwd(), "Arabidopsis", idExp, "Figures", "PPTX", paste(idExp, "kin_WS_pgm.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_WS_pgm.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 
@@ -451,7 +461,7 @@ common.args <- list(avg_dat = Tr.avg.kPa,
                     x.legend = X.LEGEND, y.legend = Y.LEGEND,
                     color_E_by_SWC = T, col_by_SWC = c("black", "black"), lty_by_SWC = c(1, 3))
 
-pdf(file.path(getwd(), "Arabidopsis", idExp, "Figures", paste(idExp, "Step#03f_plot_average_per_condition_use_SWC_use_VPD.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#03f_plot_average_per_condition_use_SWC_use_VPD.pdf", sep = "_")), width = 8, height = 5)
 do.call(plot_avg_kin, append(common.args, list(treatments = c("Col-0 - WW", "Col-0 - WS"),
                                                title_by_SWC = "Col-0",
                                                text.legend = c("well-watered (n = 8)", "stable water stress (n = 8)"))))
