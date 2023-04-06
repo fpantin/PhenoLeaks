@@ -23,41 +23,53 @@ rm(list=ls()) # empty environment (if not potential error )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 #options(repos = "https://cran.rstudio.com/") # RStudio
-for (pkg in c("splitstackshape"))
-{
+for (pkg in c("splitstackshape", "here"))
+  {
   if (!pkg %in% installed.packages()[, "Package"]) { install.packages(pkg) }
   #update.packages(pkg)
   library(pkg, character.only = T)
-}
+  }
+
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                                                              #
-#                 (2)  Retrieve the features of the experiment                 #
+#                             (2)  Source functions                            #
 #                                                                              #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-idExp = "C2M47"
-source(file.path(getwd(), "Arabidopsis", idExp, "Step#00_define_experiment.R"))
-
-# To check the constants, run:
-#set_constants_C2M47()
-
-# To check the colors, enter:
-#set_colors_C2M47()
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#                                                                              #
-#                             (3)  Source functions                            #
-#                                                                              #
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-# Note that the working directory is expected to be the one of the PhenoLeaks project directory,
-# e.g. in RStudio: Session > Set Working Directory > To Project Directory
-dir_PhenoLeaks <- file.path(getwd(), "_core")
+# Note that paths are built relative to the root directory of the PhenoLeaks project.
+dir_PhenoLeaks <- here::here("_core")
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_preparation.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_transpiration.R"))
 
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#                                                                              #
+#                 (3)  Retrieve the features of the experiment                 #
+#                                                                              #
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+# Here the file "Step#00_define_experiment.R" should be sourced.
+
+  ## OPTION 1: open the file and source it manually
+
+  ## OPTION 2: set the correct file path and source it from this script, e.g.:
+  source(file.path(here::here(), "Arabidopsis", "C2M47", "Step#00_define_experiment.R"))
+
+# Now the species and ID of the experiment can be found by entering:
+#c(spcs, idExp)
+
+# so that the directory of the experiment is now explicitly defined as:
+dir_Exp <- file.path(here::here(), spcs, idExp)
+
+# To check all constants, enter:
+#set_constants_C2M47()
+
+# To check the colors, enter:
+#set_colors_C2M47()
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -72,19 +84,19 @@ source(file.path(dir_PhenoLeaks, "PhenoLeaks_transpiration.R"))
 
 # Meteo data 
 # source: Phenopsis DB
-meteo <- read.csv(file.path(getwd(), spcs, idExp, "Raw_data", paste0(idExp,"_starch_meteo.csv")),stringsAsFactors=F, sep=',')
+meteo <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_starch_meteo.csv")),stringsAsFactors=F, sep=',')
 
 # Genotype data
 # source: own file
-genolist <- read.csv(file.path(getwd(), spcs, idExp, "Raw_data", paste0(idExp,"_starch_genotype_list.csv")),stringsAsFactors=F, sep=';')
+genolist <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_starch_genotype_list.csv")),stringsAsFactors=F, sep=';')
 
 # Leaf surface data
 # source: output from a Python pipeline to extract rosette surface area
-surface <- read.csv(file.path(getwd(), spcs, idExp, "Raw_data", paste0(idExp,"_starch_leafsurface.csv")),stringsAsFactors=F, sep=',')
+surface <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_starch_leafsurface.csv")),stringsAsFactors=F, sep=',')
 
 # Gravimetric data
 # source: Phenopsis DB
-grv <- read.csv(file.path(getwd(), spcs, idExp, "Raw_data", paste0(idExp,"_starch_gravimetric.csv")),header = T,sep=",")
+grv <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_starch_gravimetric.csv")),header = T,sep=",")
 
 
 #------------------------------------------------------------------------------#
@@ -156,8 +168,8 @@ grv <- merge(grv,genolist,by="idPot")
 #------------------------------------------------------------------------------#
 
 # check plant growth data for outliers and fit
-if (!dir.exists(file.path(getwd(), spcs, idExp, "Figures"))) { dir.create(file.path(getwd(), spcs, idExp, "Figures")) }
-pdf(file.path(getwd(), spcs, idExp, "Figures", paste(idExp, "Step#01_plant_growth.pdf", sep = "_")), width = 10, height = 10)
+if (!dir.exists(file.path(dir_Exp, "Figures"))) { dir.create(file.path(dir_Exp, "Figures")) }
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_plant_growth.pdf", sep = "_")), width = 10, height = 10)
 
 for (geno in unique(ColorsTrt$idGenotype)){
   # geno = ColorsTrt$idGenotype[1]
@@ -209,7 +221,7 @@ output <- Rehy_Corr_v4(input = grv,gap = 1)
 df_rehy <- output$output # corrected output
 corr1 <- output$corr1 # 1 run: detected rehydrations
 
-pdf(file.path(getwd(), spcs, idExp, "Figures", paste(idExp, "Step#01_correct_irrigation.pdf", sep = "_")), width = 10, height = 10)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_irrigation.pdf", sep = "_")), width = 10, height = 10)
 x = c(grv$decimalDay,df_rehy$decimalDay)
 y = c(grv$weight,df_rehy$Weight_corr)
 xlim = range(x)
@@ -323,7 +335,7 @@ for (i in inpots){
 df$outlier[df$side_outlier  | df$obvious_outlier | df$hotspot_outlier] <- T
 df_lessstrict <- df
 
-pdf(file.path(getwd(), spcs, idExp, "Figures", paste(idExp, "Step#01_correct_gravimetric_outliers.pdf", sep = "_")), width = 10, height = 10)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_gravimetric_outliers.pdf", sep = "_")), width = 10, height = 10)
 for (i in inpots){
   
   input <- df_lessstrict[df_lessstrict$idPot == i,]
