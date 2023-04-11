@@ -39,6 +39,7 @@ rm(list=ls()) # empty environment (if not potential error )
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 #options(repos = "https://cran.rstudio.com/") # RStudio
+# package splitstackshape contains a function Csplit to split columns based on a seperator.
 for (pkg in c("splitstackshape", "here"))
   {
   if (!pkg %in% installed.packages()[, "Package"]) { install.packages(pkg) }
@@ -120,34 +121,55 @@ grv <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_starch_gravimetric
 #------------------------------------------------------------------------------#
 # prepare each inputfile: renaming columns, adding new vectors as a decimalDay
 
+
+#------------------------------------------------------------------------------#
 # Meteo data
 meteo$date <- as.POSIXct(strptime(meteo$date,format= "%Y-%m-%d %H:%M:%S", tz = "UTC")) # now the date/hour is not changing
 meteo$decimalDay <- decimalDay(column=meteo$date) # add decimal day
 colnames(meteo) <- c("idChamber","date","Air.humidity","Air.temperature","Light","VPD","decimalDay") # rename colum names
 
-# Genotype data
-genolist <- genolist[,c("idPotManip","idGenotype","Treatment","Analysis","Sowing")] # select column names (deselect idPot)
-genolist$Sowing_decimalDay <- decimalDay(column=genolist$Sowing) # add decimal day
-inpots <- genolist$idPotManip[genolist$Analysis == "TR"]
-colnames(genolist)[match("idPotManip",colnames(genolist))] <- "idPot" # rename column
 
+#------------------------------------------------------------------------------#
+# Genotype data
+genolist <- genolist[,c("idPot","idGenotype","Treatment","Analysis","Sowing")] # select column names (deselect idPot)
+genolist$Sowing_decimalDay <- decimalDay(column=genolist$Sowing) # add decimal day
+inpots <- genolist$idPot[genolist$Analysis == "TR"]
+
+
+#------------------------------------------------------------------------------#
 # Leaf surface data
 # need to update this one using raw input file (as for the other experiments)
-surface <- surface[,c("idPotManip","decimalDay","Areamm2","outlier")] # select column names (deselect idPot)
-colnames(surface)[match("idPotManip",colnames(surface))] <- "idPot" # rename column
+surface <- surface[,c("idPot","decimalDay","Areamm2","outlier")] # select column names (deselect idPot)
 surf_coef <- surf_fit(surface) # calculate the statistical model that fits best the evolution of rosette growth data
 
+
+#------------------------------------------------------------------------------#
 # Gravimetric data
-grv <- grv[grv$idPotManip %in% inpots,]
-grv <- grv[,c("idPotManip","date","After.watering.weight")]
+# preparation and 
+grv <- as.data.frame(splitstackshape::cSplit(grv, "idPotManip", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
+colnames(grv)[match("idPotManip_2",colnames(grv))] <- "idPot" # rename column
 colnames(grv)[match("After.watering.weight",colnames(grv))] <- "weight" # rename column
-colnames(grv)[match("idPotManip",colnames(grv))] <- "idPot" # rename column
+grv <- grv[,c("idPot","date","weight")]
 grv$date <- as.POSIXct(strptime(grv$date,format= "%Y-%m-%d %H:%M:%S", tz = "UTC")) 
 grv$decimalDay <- decimalDay(column=grv$date) # add decimal day
 grv$hourday <- as.numeric(sub(".*\\.","0.",sprintf("%.10f", round(grv$decimalDay,10)) )) # add decimal hour on day
-grv <- grv[which(grv$date > from & grv$date < to),] #select the data from the start and end of gravimetric experiment
+grv$dayofyear = as.integer(grv$decimalDay) # day of the year
+
+# filtering
 grv <- grv[!is.na(grv$weight),]# delete all NA's
 if(anyDuplicated(grv) > 0){ grv <- grv[!duplicated(grv),] }# remove identical lines
+grv <- grv[which(grv$date > from & grv$date < to),] #select the data from the start and end of gravimetric experiment
+
+# take out days with less than 4 measurements on a single day. Alternive is selecting on "inpots" (future)
+grv$idPotManipday <-  paste(grv$idPot, grv$dayofyear, sep="-") # new vector of idPotmanip 
+grv$idPotManipday <- as.factor(grv$idPotManipday)
+numreps <- as.data.frame(table(grv$idPotManipday))
+removepotsday <- unique(numreps[numreps$Freq < 4,]$Var1)
+grv <- grv[!grv$idPotManipday %in% removepotsday,]
+
+grv <- grv[grv$idPot %in% inpots,] # alternative for selecting only pots with more than 4 measurements per day. Better.
+
+# adding more information
 grv <- grv[order(grv$idPot,grv$decimalDay),] # order per pot and decimalDay
 grv$ID <- rep(NA,nrow(grv)) # unique chronlogical identifier per measurement per pot
 grv$Exp_time <- rep(NA,nrow(grv)) # exp time = decimalDay - day number of first day = continuous exp time from 0,.. to 8,.. days 
@@ -178,6 +200,7 @@ if (night == "normal"){
 }
 grv <- surface_add(input=grv) # add leaf surface per timepoint per pot. 
 grv <- merge(grv,genolist,by="idPot")
+grv <- grv[,!colnames(grv) %in% c("idPotManipday")]
 
 #------------------------------------------------------------------------------#
 #                       Check                                                  #

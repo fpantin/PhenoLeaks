@@ -240,17 +240,17 @@ Rehy_Corr_v4 <- function(input, gap){
                          decimalDay = NULL)
   
   for (id in unique(input$idPot)){
-    # id = "C2M49-1850"
+    # id = 219
     # id = unique(input$idPot)[1]
-    selec <- which(input$idPot == id)
+    selec <- which(input$idPot == id) # select the index numbers (not ID col!). 
     #selec = selec[selec > 161]
     outlier <- c()
     for (j in selec[-length(selec)]){
       
       # for every measurement for this pot...
-      # j are index numbers!!
+      # j are index numbers!! not ID numbers
       # j = 220
-      if(!j %in% outlier){
+      if(!j %in% outlier){ # do not get why this conditions exists, no use I think
         beforeweight = input$weight[j]
         afterweight = input$weight[j + 1]
         diff1 = beforeweight -  afterweight
@@ -273,7 +273,7 @@ Rehy_Corr_v4 <- function(input, gap){
             
             # next point is good point 
             
-            dataindex2 <- selecpoint(timer = 160) #*
+            dataindex2 <- selecpoint(timer = 160) #
             
             if (length(dataindex2) >= 2 ){
               
