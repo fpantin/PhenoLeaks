@@ -196,7 +196,9 @@ set_colors_C2M47 <- function ()
 # Call the function
 c(ColorsTrt, ColorsPeriod) := set_colors_C2M47()
 
-
+#------------------------------------------------------------------------------#
+# color vector to distinguish between individual pots
+Colors <- c("brown3", "darkblue","darkorange", "cadetblue3", "red","darkolivegreen","chartreuse","darkgrey","chocolate","burlywood","darkkhaki", "darkorchid","deeppink","darkturquoise","darkred","orange")
 
 #------------------------------------------------------------------------------#
 #                             Check irrigation data                            #
