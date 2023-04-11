@@ -1,13 +1,29 @@
 ################################################################################
 #                                                                              #
-#         PhenoLeaks - Step #01 - Estimation of transpiration                  #
+#       PhenoLeaks - Step #01 - Computing transpiration from weight data       #
 #                                                                              #
-#              Script to clean raw data and estimate transpiration values      #
+#                       Script to clean raw weight data                        #
+#                      and estimate transpiration values                       #
 #                                                                              #
 #                             Adriaan Westgeest, 2023                          #
 #                                                                              #
 ################################################################################
 
+#>                                                                            <#
+#     >                                                                  <     #
+#           >                                                      <           #
+#                 >                                          <                 #
+#                       >                              <                       #
+#                             >                  <                             #
+#                                     C2M47                                    #
+#                             >                  <                             #
+#                       >                              <                       #
+#                 >                                          <                 #
+#           >                                                      <           #
+#     >                                                                  <     #
+#>                                                                            <#
+
+                                                                     
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                                                              #
 #                              (0)  Prepare environment                        #

@@ -9,7 +9,19 @@
 #                                                                              #
 ################################################################################
 
-
+#>                                                                            <#
+#     >                                                                  <     #
+#           >                                                      <           #
+#                 >                                          <                 #
+#                       >                              <                       #
+#                             >                  <                             #
+#                                     C2M47                                    #
+#                             >                  <                             #
+#                       >                              <                       #
+#                 >                                          <                 #
+#           >                                                      <           #
+#     >                                                                  <     #
+#>                                                                            <#
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                                                              #
@@ -190,7 +202,7 @@ c(ColorsTrt, ColorsPeriod) := set_colors_C2M47()
 #                             Check irrigation data                            #
 #------------------------------------------------------------------------------#
 
-irrig_file <- file.path(getwd(), spcs, idExp, "Processed_data", "C2M47_starch_irrigations.csv")
+irrig_file <- file.path(here::here(), spcs, idExp, "Processed_data", "C2M47_starch_irrigations.csv")
 if (file.exists(irrig_file))
   {
   # Import and manage irrigation data
