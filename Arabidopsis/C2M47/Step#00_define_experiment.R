@@ -204,12 +204,11 @@ Colors <- c("brown3", "darkblue","darkorange", "cadetblue3", "red","darkolivegre
 #                             Check irrigation data                            #
 #------------------------------------------------------------------------------#
 
-irrig_file <- file.path(here::here(), spcs, idExp, "Processed_data", "C2M47_starch_irrigations.csv")
+irrig_file <- file.path(here::here(), spcs, idExp, "Processed_data", "C2M47_info_irrigation.csv")
 if (file.exists(irrig_file))
   {
   # Import and manage irrigation data
   irrig <- read.csv(irrig_file)
-  irrig$idPot <- sub("C2M47-", "", irrig$idPot)#################
   irrig <- irrig[order(irrig$idPot, irrig$decimalDay), ]
   
   # Check the number of irrigation events for each pot

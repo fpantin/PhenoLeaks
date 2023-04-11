@@ -95,7 +95,7 @@ dir_Exp <- file.path(here::here(), spcs, idExp)
 
 # Transpiration data
 # calculated from "cleaned_outliers.csv" and "Transpiration_calculations_v2.Rmd"
-df <- read.csv(file.path(dir_Exp, "Processed_data", "C2M47_starch_pot_transpiration_SWC.csv"))
+df <- read.csv(file.path(dir_Exp, "Processed_data", "C2M47_pot_transpiration.csv"))
 df <- df[, c("idPot", "idGenotype", "idWatering", "decimalDay", "E_mmol_per_m2_s", "meanVPD", "E_mmol_per_m2_s_kPa", "SWC")]
 
 # Format the dataframe with a uniform time sequence for all pots (if not done at Step#01, add lines and print warning messages)
