@@ -60,9 +60,9 @@ rectangle <- function(x,y){
   days <- seq(min(unique(as.integer(x))),max(unique(as.integer(x))),1) 
   days = c(days,(min(days)-1),(max(days)+1))
   
-  for (i in days){
+  for (d in days){
     # i = 179
-    rect(xleft= i + startdark, xright= i + startdark + darkperiod, ybottom= min(y,na.rm = T), ytop= max(y,na.rm = T), density= NULL, col= color[1], border = NA)
+    rect(xleft= d + startdark, xright=d + startdark + darkperiod, ybottom= min(y,na.rm = T), ytop= max(y,na.rm = T)*2, density= NULL, col= color[1], border = NA)
     
   }
   
@@ -919,3 +919,5 @@ Outliers_v5 <- function(time,weight,lightPeriod,outlier, hotspot,startdark,perio
   
   
 }
+
+
