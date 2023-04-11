@@ -47,25 +47,9 @@ for (pkg in c("splitstackshape", "here"))
   library(pkg, character.only = T)
   }
 
-
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                                                              #
-#                             (2)  Source functions                            #
-#                                                                              #
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-# Note that paths are built relative to the root directory of the PhenoLeaks project.
-dir_PhenoLeaks <- here::here("_core")
-source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
-source(file.path(dir_PhenoLeaks, "PhenoLeaks_preparation.R"))
-source(file.path(dir_PhenoLeaks, "PhenoLeaks_transpiration.R"))
-
-
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#                                                                              #
-#                 (3)  Retrieve the features of the experiment                 #
+#                 (2)  Retrieve the features of the experiment                 #
 #                                                                              #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -88,6 +72,17 @@ dir_Exp <- file.path(here::here(), spcs, idExp)
 # To check the colors, enter:
 #set_colors_C2M47()
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#                                                                              #
+#                             (3)  Source functions                            #
+#                                                                              #
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+# Note that paths are built relative to the root directory of the PhenoLeaks project.
+dir_PhenoLeaks <- here::here("_core")
+source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
+source(file.path(dir_PhenoLeaks, "PhenoLeaks_preparation.R"))
+source(file.path(dir_PhenoLeaks, "PhenoLeaks_weight_to_transpiration.R"))
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                                                              #
@@ -132,9 +127,9 @@ colnames(meteo) <- c("idChamber","date","Air.humidity","Air.temperature","Light"
 #------------------------------------------------------------------------------#
 # Genotype data
 genolist <- genolist[,c("idPot","idGenotype","Treatment","Analysis","Sowing")] # select column names (deselect idPot)
+genolist$Sowing <- as.POSIXct(genolist$Sowing,format= "%d/%m/%Y", tz = "UTC") # transform to posixct before calculation decimalday
 genolist$Sowing_decimalDay <- decimalDay(column=genolist$Sowing) # add decimal day
 inpots <- genolist$idPot[genolist$Analysis == "TR"]
-
 
 #------------------------------------------------------------------------------#
 # Leaf surface data
@@ -202,6 +197,10 @@ grv <- surface_add(input=grv) # add leaf surface per timepoint per pot.
 grv <- merge(grv,genolist,by="idPot")
 grv <- grv[,!colnames(grv) %in% c("idPotManipday")]
 
+# just add sowing data to genolist file to add at the end to the transpiration file
+genolist$Measuring_decimalDay <- min(grv$dayofyear)
+genolist$Days_Sowing_to_measuring <- genolist$Measuring_decimalDay - genolist$Sowing_decimalDay
+
 #------------------------------------------------------------------------------#
 #                       Check                                                  #
 #------------------------------------------------------------------------------#
@@ -252,13 +251,21 @@ dev.off()
 
 #---------------------------STEP 1---------------------------------------------#
 # detect and correct for manual water irrigations
-# check for outliers if still in 
-if(nrow(grv[c(grv$idPot == "C2M47-321" & grv$ID %in% c(220,221)),])>0){grv <- grv[-c(34508,34509),] }# eliminate two points of one pot because two points are outliers
+# manual outlier detection before irrigation check: need to elimate these points, because the script  
+outs <- which(grv$idPot == "321" & grv$weight %in% c(215.003,214.853)) # designate two points of one pot as outliers
+grv <- grv[-outs,] # elimination, easier for next steps than to include an outlier column. 
 
 output <- Rehy_Corr_v4(input = grv,gap = 1)
 
 df_rehy <- output$output # corrected output
 corr1 <- output$corr1 # 1 run: detected rehydrations
+stopifnot(dim(corr1)[1] == 263)
+# check if works for pot 321
+# windows()
+# input = df_rehy[df_rehy$idPot=="321",]
+# plot(Weight_corr~decimalDay, data = input,ylim=range(input$weight,input$Weight_corr),col="red",ylab="weight")
+# points(weight~decimalDay, data = df_rehy[df_rehy$idPot=="321",],  col = "black")
+# legend("topright",legend="corrected weight after irrigation",fill="red")
 
 pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_irrigation.pdf", sep = "_")), width = 10, height = 10)
 x = c(grv$decimalDay,df_rehy$decimalDay)
@@ -287,17 +294,21 @@ for (i in inpots){
 dev.off()
 
 df = df_rehy
-# manual correction irrigation
-i ="C2M47-374"
-plot(Weight_corr~decimalDay,df[df$idPot =="C2M47-374",],main=i)
-df$Weight_corr[df$idPot == "C2M47-374" & df$ID > 38] <- df$Weight_corr[df$idPot == "C2M47-374" & df$ID > 38] - 0.28
-plot(Weight_corr~decimalDay,df[df$idPot =="C2M47-374",],main=paste0(i," -corrected manually"))
+# manual correction irrigation:
+# corr 1:
+i ="374"
+# plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=i)
+df$Weight_corr[df$idPot == i & df$ID > 38] <- df$Weight_corr[df$idPot == i & df$ID > 38] - 0.28
+# plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=paste0(i," -corrected manually"))
+# corr 2:
+i ="306"
+# plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=paste0(i))
+df$Weight_corr[df$idPot == i & df$ID %in% c(289:295)] <- df$Weight_corr[df$idPot == i &  df$ID %in% c(289:295)] - 0.35
+# plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=paste0(i," -corrected manually"))
 
-  # corr 2:
-i ="C2M47-306"
-plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=paste0(i))
-df$Weight_corr[df$idPot == i & df$ID %in% c(290:296)] <- df$Weight_corr[df$idPot == i &  df$ID %in% c(290:296)] - 0.35
-plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=paste0(i," -corrected manually"))
+# save irrigation information:
+p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "info_irrigation.csv", sep = "_"))
+write.csv(corr1,p2f,row.names = F)
 
 #---------------------------STEP 2---------------------------------------------#
 # Gravimetric outlier detection
@@ -314,10 +325,6 @@ max_dark = 3.5
 min_light = -0.4
 max_light = 4.5
 
-# pots
-#idpots <- unique(df$idPot)
-# idpots <- unique(df$idPot)[1]
-inpots = unique(df$idPot)
 for (i in inpots){
   # i = unique(df$idPot)[1]
   # i = "C2M47-217"
@@ -372,18 +379,18 @@ for (i in inpots){
 
 
 df$outlier[df$side_outlier  | df$obvious_outlier | df$hotspot_outlier] <- T
-df_lessstrict <- df
+stopifnot(nrow(df[df$outlier,])==216) # check with analysis used for publication
 
 pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_gravimetric_outliers.pdf", sep = "_")), width = 10, height = 10)
 for (i in inpots){
   
-  input <- df_lessstrict[df_lessstrict$idPot == i,]
+  input <- df[df$idPot == i,]
   plot(Weight_corr~decimalDay,input,type= "n")
   points(Weight_corr~decimalDay,input[!input$outlier,])
   x = input$decimalDay
   y = input$Weight_corr
   rectangle(x,y)
-  title(paste0(i," less_strict"))
+  title(paste0("idPot : ",i))
   
   # outliers
   points(Weight_corr~decimalDay,input[input$side_outlier,],col= "red",pch = 16)
@@ -398,9 +405,71 @@ for (i in inpots){
   }
 }
 dev.off()
+
+
 #------------------------------------------------------------------------------#
-#                           Output                                             #
+#                               Transpiration                                  #
 #------------------------------------------------------------------------------#
 
+colnames(df)[match("weight",colnames(df))] <- "initial_weight" # renaming because transpiration function takes "weight" as input.
+df$weight <- df$Weight_corr
+input = df[!df$outlier,]
+dfE_v7 <- Transpi_calc_v7(input = input, freq = 30, min_around = 90, lightsOFF = lightsOFF, nightperiod = Sko_Per, method = "lm",max = 180,nop=2, max_end = 120) # calculate transpiration with function
 
+# add surface
+dfE_v7$surface = NA # need to check in the future: 217 start is NA for the surface.. 
+for (i in 1:nrow(dfE_v7)){
+  dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay> dfE_v7$min_decimalDay[i] & grv$decimalDay< dfE_v7$max_decimalDay[i]])
+}
 
+dfE_v7$E_mmol_per_m2_s  = dfE_v7$E / (dfE_v7$surface * 10^-6)
+# head(dfE_v7)
+
+transpi = merge(dfE_v7,genolist,by="idPot")
+
+# which(diff(aggregate(transpi$idPotManip, by = list(transpi$idPotManip), FUN = length)$x) != 0) 
+
+transpi$meanVPD <- NA
+
+for (i in 1:nrow(transpi)){
+  #i=1
+  min = transpi$min_decimalDay[i]
+  mx = transpi$max_decimalDay[i]
+  transpi$meanVPD[i] <- mean(meteo$VPD[meteo$decimalDay > min & meteo$decimalDay < mx])
+}
+# head(transpi)
+
+transpi <- transpi[order(transpi$idPot, transpi$decimalDay), ]
+transpi$E_mmol_per_m2_s_kPa  <- transpi$E_mmol_per_m2_s  / transpi$meanVPD
+
+# graphs
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_transpiration.pdf", sep = "_")), width = 10, height = 10)
+x = transpi$decimalDay
+y = transpi$E_mmol_per_m2_s
+
+for (i in unique(transpi$idGenotype)){
+  # i = unique(genolist$idGenotype)[1]
+  input <- transpi[transpi$idGenotype == i,]
+  plot(E_mmol_per_m2_s~decimalDay,input,type='n',ylab=ylab_tr,ylim=c(0,4),xlim=range(x,na.rm = T))
+  title(i)
+  rectangle(x,y)
+  
+  for (id in unique(input$idPot)){
+    points(E_mmol_per_m2_s~decimalDay,input[input$idPot == id,],type="l",col=Colors[match(id,unique(input$idPot))])
+    points(E_mmol_per_m2_s~decimalDay,input[input$idPot == id,],type="p",col=Colors[match(id,unique(input$idPot))],cex=0.25)
+    
+  }
+  
+  legend("topright",legend = unique(input$idPot),fill=Colors)
+}
+dev.off()
+
+# save output transpiration
+colnames(transpi)[match("Treatment",colnames(transpi))] <- "idWatering" 
+
+p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "_pot_transpiration.csv", sep = "_"))
+write.csv(transpi,p2f,row.names = F)
+
+# cleaned gravimetrical data
+p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "_cleaned_gravi_data.csv", sep = "_"))
+write.csv(df,p2f,row.names = F)
