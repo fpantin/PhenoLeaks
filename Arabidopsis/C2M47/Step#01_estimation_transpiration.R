@@ -110,6 +110,8 @@ surface <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_leafsurface.cs
 # source: Phenopsis DB
 grv <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_gravimetric.csv")),header = T,sep=",")
 
+# Soil water content data
+swc <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_soilwatercontent.csv")),header = T,sep=";",dec=".")
 
 #------------------------------------------------------------------------------#
 #                       Input file preparation                                 #
@@ -137,6 +139,10 @@ inpots <- genolist$idPot[genolist$Analysis == "TR"]
 surface <- surface[,c("idPot","decimalDay","Areamm2","outlier")] # select column names (deselect idPot)
 surf_coef <- surf_fit(surface) # calculate the statistical model that fits best the evolution of rosette growth data
 
+#------------------------------------------------------------------------------#
+# Soil water content data
+swc <- as.data.frame(splitstackshape::cSplit(swc, "idPotManip", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
+colnames(swc)[match("idPotManip_2",colnames(swc))] <- "idPot"
 
 #------------------------------------------------------------------------------#
 # Gravimetric data
@@ -466,9 +472,33 @@ for (i in unique(transpi$idGenotype)){
 }
 dev.off()
 
+#------------------------------------------------------------------------------#
+#                               Soil Water Content SWC                         #
+#------------------------------------------------------------------------------#
+
+# loop on every pot 
+# take the SWCs for every pot between the decimaldays used to calculate the transpiration
+df <- df[order(df$idPot,df$decimalDay),]
+
+df$SWC <- 0
+for (i in unique(df$idPot)){
+  # i = "217"
+  potweight <- swc$poidsPotNonTroue[swc$idPot == i]+swc$poidsPotTroue[swc$idPot == i]
+  drysoilweight <- swc$poidsSolSec[swc$idPot == i]
+  df$SWC[df$idPot == i] <- (df$initial_weight[df$idPot == i] - drysoilweight - potweight)/drysoilweight
+}
+
+# add the mean SWC to the transpiration file
+transpi <- transpi[order(transpi$idPot,transpi$decimalDay),]
+transpi$SWC <- 0
+for (i in 1:nrow(transpi)){
+  # i = 2
+  id = transpi$idPot[i]
+  transpi$SWC[i] <- mean(df$SWC[df$idPot == id & df$decimalDay > transpi$min_decimalDay[i] & df$decimalDay < transpi$max_decimalDay[i]]) 
+}
+
 # save output transpiration
 colnames(transpi)[match("Treatment",colnames(transpi))] <- "idWatering" 
-
 p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "pot_transpiration.csv", sep = "_"))
 write.csv(transpi,p2f,row.names = F)
 
