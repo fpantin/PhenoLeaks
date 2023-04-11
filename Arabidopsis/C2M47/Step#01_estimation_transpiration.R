@@ -96,19 +96,19 @@ source(file.path(dir_PhenoLeaks, "PhenoLeaks_weight_to_transpiration.R"))
 
 # Meteo data 
 # source: Phenopsis DB
-meteo <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_starch_meteo.csv")),stringsAsFactors=F, sep=',')
+meteo <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_meteo.csv")),stringsAsFactors=F, sep=',')
 
 # Genotype data
 # source: own file
-genolist <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_starch_genotype_list.csv")),stringsAsFactors=F, sep=';')
+genolist <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_genotype_list.csv")),stringsAsFactors=F, sep=';')
 
 # Leaf surface data
 # source: output from a Python pipeline to extract rosette surface area
-surface <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_starch_leafsurface.csv")),stringsAsFactors=F, sep=',')
+surface <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_leafsurface.csv")),stringsAsFactors=F, sep=',')
 
 # Gravimetric data
 # source: Phenopsis DB
-grv <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_starch_gravimetric.csv")),header = T,sep=",")
+grv <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_gravimetric.csv")),header = T,sep=",")
 
 
 #------------------------------------------------------------------------------#
@@ -307,6 +307,7 @@ df$Weight_corr[df$idPot == i & df$ID %in% c(289:295)] <- df$Weight_corr[df$idPot
 # plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=paste0(i," -corrected manually"))
 
 # save irrigation information:
+if (!dir.exists(file.path(dir_Exp, "Processed_data"))) { dir.create(file.path(dir_Exp, "Processed_data")) }
 p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "info_irrigation.csv", sep = "_"))
 write.csv(corr1,p2f,row.names = F)
 
@@ -414,6 +415,7 @@ dev.off()
 colnames(df)[match("weight",colnames(df))] <- "initial_weight" # renaming because transpiration function takes "weight" as input.
 df$weight <- df$Weight_corr
 input = df[!df$outlier,]
+# This line takes a few minutes:
 dfE_v7 <- Transpi_calc_v7(input = input, freq = 30, min_around = 90, lightsOFF = lightsOFF, nightperiod = Sko_Per, method = "lm",max = 180,nop=2, max_end = 120) # calculate transpiration with function
 
 # add surface
@@ -467,9 +469,9 @@ dev.off()
 # save output transpiration
 colnames(transpi)[match("Treatment",colnames(transpi))] <- "idWatering" 
 
-p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "_pot_transpiration.csv", sep = "_"))
+p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "pot_transpiration.csv", sep = "_"))
 write.csv(transpi,p2f,row.names = F)
 
 # cleaned gravimetrical data
-p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "_cleaned_gravi_data.csv", sep = "_"))
+p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "cleaned_gravi_data.csv", sep = "_"))
 write.csv(df,p2f,row.names = F)
