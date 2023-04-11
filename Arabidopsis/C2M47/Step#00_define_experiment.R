@@ -80,10 +80,10 @@ set_constants_C2M47 <- function ()
   Pho_Per <- 12
   
   # Start of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
-  from <- "2019-02-28 16:00:00"
+  from <- as.POSIXct("2019-02-28 16:00:00", tz ="UTC")
   
   # End of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
-  to <- "2019-03-08 23:00:00"
+  to <- as.POSIXct("2019-03-08 23:00:00", tz ="UTC")
   
   # Duration of the skotoperiod (h)
   # Note that the scripts will not work for diel cycles that do not match 24 h.
