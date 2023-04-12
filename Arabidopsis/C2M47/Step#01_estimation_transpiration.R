@@ -141,8 +141,15 @@ surf_coef <- surf_fit(surface) # calculate the statistical model that fits best 
 
 #------------------------------------------------------------------------------#
 # Soil water content data
-swc <- as.data.frame(splitstackshape::cSplit(swc, "idPotManip", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
-colnames(swc)[match("idPotManip_2",colnames(swc))] <- "idPot"
+if (colnames(swc)[1] == "idPotManip"){
+  # when french version was downloaded
+  swc <- as.data.frame(splitstackshape::cSplit(swc, "idPot", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
+  colnames(swc)[match("idPotManip_2",colnames(swc))] <- "idPot"
+  colnames(swc)[match("poidsPotNonTroue",colnames(swc))] <- "nonPerforatedPotWeight"
+  colnames(swc)[match("poidsPotTroue",colnames(swc))] <- "perforatedPotWeight"
+  colnames(swc)[match("poidsSolSec",colnames(swc))] <- "drySoilWeight"
+}
+swc <- swc[,c("idPot","nonPerforatedPotWeight","perforatedPotWeight","drySoilWeight")] # select column names 
 
 #------------------------------------------------------------------------------#
 # Gravimetric data
@@ -483,8 +490,8 @@ df <- df[order(df$idPot,df$decimalDay),]
 df$SWC <- 0
 for (i in unique(df$idPot)){
   # i = "217"
-  potweight <- swc$poidsPotNonTroue[swc$idPot == i]+swc$poidsPotTroue[swc$idPot == i]
-  drysoilweight <- swc$poidsSolSec[swc$idPot == i]
+  potweight <- swc$nonPerforatedPotWeight[swc$idPot == i]+swc$perforatedPotWeight[swc$idPot == i]
+  drysoilweight <- swc$drySoilWeight[swc$idPot == i]
   df$SWC[df$idPot == i] <- (df$initial_weight[df$idPot == i] - drysoilweight - potweight)/drysoilweight
 }
 
