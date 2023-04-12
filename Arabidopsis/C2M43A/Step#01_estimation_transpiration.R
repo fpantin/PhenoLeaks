@@ -96,7 +96,7 @@ source(file.path(dir_PhenoLeaks, "PhenoLeaks_weight_to_transpiration.R"))
 
 # Meteo data 
 # source: Phenopsis DB
-meteo <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_meteo.csv")),stringsAsFactors=F, sep=';')
+meteo <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_meteo.csv")),stringsAsFactors=F, sep=',')
 
 # Genotype data
 # source: own file
@@ -123,30 +123,45 @@ swc <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_soilwatercontent.c
 # Meteo data
 meteo$date <- as.POSIXct(strptime(meteo$date,format= "%Y-%m-%d %H:%M:%S", tz = "UTC")) # now the date/hour is not changing
 meteo$decimalDay <- decimalDay(column=meteo$date) # add decimal day
-colnames(meteo) <- c("idChamber","date","Air.humidity","Air.temperature","Light","VPD","decimalDay") # rename colum names
-
 
 #------------------------------------------------------------------------------#
 # Genotype data
-genolist <- genolist[,c("idPot","idGenotype","Treatment","Analysis","Sowing")] # select column names (deselect idPot)
+genolist <- genolist[,c("idPot","idGenotype","Treatment","Sowing")] # select column names (deselect idPot)
 genolist$Sowing <- as.POSIXct(genolist$Sowing,format= "%d/%m/%Y", tz = "UTC") # transform to posixct before calculation decimalday
 genolist$Sowing_decimalDay <- decimalDay(column=genolist$Sowing) # add decimal day
-inpots <- genolist$idPot[genolist$Analysis == "TR"]
 
 #------------------------------------------------------------------------------#
 # Leaf surface data
 # need to update this one using raw input file (as for the other experiments)
-surface <- surface[,c("idPot","decimalDay","Areamm2","outlier")] # select column names (deselect idPot)
+surface <- splitstackshape::cSplit(surface, "Label", sep="-", type.convert=F) # the file name column
+colnames(surface)[match(c("Label_1", "Label_2"),colnames(surface))] = c("Experiment","idPot")
+surface$Date1 <- as.POSIXct(strptime(surface$Date, format= "%d/%m/%Y %H:%M",tz = "UTC"))
+surface$decimalDay <- decimalDay(column=surface$Date1) # add decimal day
+surface$Areamm2 <- surface$Area..cm2. * 100 # recalculation in mm2 units
+surface$outlier <- FALSE # no outliers yet identified
+surface <- surface[,c("idPot","decimalDay","Areamm2","outlier")] # select column names 
 surf_coef <- surf_fit(surface) # calculate the statistical model that fits best the evolution of rosette growth data
 
 #------------------------------------------------------------------------------#
 # Soil water content data
-swc <- as.data.frame(splitstackshape::cSplit(swc, "idPotManip", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
-colnames(swc)[match("idPotManip_2",colnames(swc))] <- "idPot"
+if ("idPotManip" %in% colnames(swc)){
+  # when french version was downloaded
+  swc <- as.data.frame(splitstackshape::cSplit(swc, "idPotManip", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
+  colnames(swc)[match("idPotManip_2",colnames(swc))] <- "idPot"
+  colnames(swc)[match("poidsPotNonTroue",colnames(swc))] <- "nonPerforatedPotWeight"
+  colnames(swc)[match("poidsPotTroue",colnames(swc))] <- "perforatedPotWeight"
+  colnames(swc)[match("poidsSolSec",colnames(swc))] <- "drySoilWeight"
+}else{
+  # when english version was downloaded
+  swc <- as.data.frame(splitstackshape::cSplit(swc, "idPot", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
+  colnames(swc)[match("idPot_2",colnames(swc))] <- "idPot"
+}
+swc <- swc[,c("idPot","nonPerforatedPotWeight","perforatedPotWeight","drySoilWeight")] # select column names 
+
 
 #------------------------------------------------------------------------------#
 # Gravimetric data
-# preparation and 
+# preparation  
 grv <- as.data.frame(splitstackshape::cSplit(grv, "idPotManip", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
 colnames(grv)[match("idPotManip_2",colnames(grv))] <- "idPot" # rename column
 colnames(grv)[match("After.watering.weight",colnames(grv))] <- "weight" # rename column
@@ -161,14 +176,13 @@ grv <- grv[!is.na(grv$weight),]# delete all NA's
 if(anyDuplicated(grv) > 0){ grv <- grv[!duplicated(grv),] }# remove identical lines
 grv <- grv[which(grv$date > from & grv$date < to),] #select the data from the start and end of gravimetric experiment
 
-# take out days with less than 4 measurements on a single day. Alternive is selecting on "inpots" (future)
+# take out days with less than 4 measurements on a single day. Alternive is selecting on "genolist$idPot" (future)
 grv$idPotManipday <-  paste(grv$idPot, grv$dayofyear, sep="-") # new vector of idPotmanip 
 grv$idPotManipday <- as.factor(grv$idPotManipday)
 numreps <- as.data.frame(table(grv$idPotManipday))
 removepotsday <- unique(numreps[numreps$Freq < 4,]$Var1)
-grv <- grv[!grv$idPotManipday %in% removepotsday,]
-
-grv <- grv[grv$idPot %in% inpots,] # alternative for selecting only pots with more than 4 measurements per day. Better.
+grv <- grv[!grv$idPotManipday %in% removepotsday,] # take these pots out
+grv <- grv[grv$idPot %in% genolist$idPot,] # alternative for selecting only pots with more than 4 measurements per day. Better.
 
 # adding more information
 grv <- grv[order(grv$idPot,grv$decimalDay),] # order per pot and decimalDay
@@ -217,7 +231,7 @@ pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_plant_growth.pdf", sep =
 
 for (geno in unique(ColorsTrt$idGenotype)){
   # geno = ColorsTrt$idGenotype[1]
-  idpots <- genolist$idPot[genolist$idGenotype == geno & genolist$Analysis == "TR"]
+  idpots <- genolist$idPot[genolist$idGenotype == geno]
   
   input <- surface[surface$idPot %in% idpots,]
   plot(Areamm2~decimalDay,input,type='n',ylab=expression(paste("Rosette surface", " (mm"^2, ")")),ylim=range(surface$Areamm2))
@@ -225,9 +239,9 @@ for (geno in unique(ColorsTrt$idGenotype)){
   rectangle(x = input$decimalDay,y = c(surface$Areamm2))
   
   for (pot in idpots){
-    # pot = idpots[1]
-    points(Areamm2~decimalDay,input[input$idPot == pot,],type="p",col = ColorsTrt$col[match(pot,idpots)])
-    points(Areamm2~decimalDay,input[input$idPot == pot & input$outlier,],type="p",col=ColorsTrt$col[match(pot,idpots)],pch=16)
+    # pot = idpots[2]
+    points(Areamm2~decimalDay,input[input$idPot == pot,],type="p",col = Colors[match(pot,idpots)])
+    points(Areamm2~decimalDay,input[input$idPot == pot & input$outlier,],type="p",col=Colors[match(pot,idpots)],pch=16)
     
     if(pot %in% unique(surf_coef$idPot)){
       
@@ -236,15 +250,15 @@ for (geno in unique(ColorsTrt$idGenotype)){
       intercept = surf_coef$intercept[surf_coef$idPot == pot & surf_coef$growth == "continu"]
       
       if (mod == "lm"){
-        curve(intercept+slope*x ,from = min(surface$decimalDay), to = max(surface$decimalDay),add = T,col = ColorsTrt$col[match(pot,idpots)])
+        curve(intercept+slope*x ,from = min(surface$decimalDay), to = max(surface$decimalDay),add = T,col = Colors[match(pot,idpots)])
       }
       if (mod == "log"){
-        curve(exp(intercept+slope*x), from = min(surface$decimalDay), to = max(surface$decimalDay),add = T,col = ColorsTrt$col[match(pot,idpots)])
+        curve(exp(intercept+slope*x), from = min(surface$decimalDay), to = max(surface$decimalDay),add = T,col = Colors[match(pot,idpots)])
       }
       
     }
   }
-  legend("topleft",legend = idpots, fill=ColorsTrt$col[1:length(idpots)])
+  legend("topleft",legend = idpots, fill=Colors[1:length(idpots)])
   
   
   
@@ -256,22 +270,9 @@ dev.off()
 #------------------------------------------------------------------------------#
 
 #---------------------------STEP 1---------------------------------------------#
-# detect and correct for manual water irrigations
-# manual outlier detection before irrigation check: need to elimate these points, because the script  
-outs <- which(grv$idPot == "321" & grv$weight %in% c(215.003,214.853)) # designate two points of one pot as outliers
-grv <- grv[-outs,] # elimination, easier for next steps than to include an outlier column. 
-
 output <- Rehy_Corr_v4(input = grv,gap = 1)
-
 df_rehy <- output$output # corrected output
 corr1 <- output$corr1 # 1 run: detected rehydrations
-stopifnot(dim(corr1)[1] == 263)
-# check if works for pot 321
-# windows()
-# input = df_rehy[df_rehy$idPot=="321",]
-# plot(Weight_corr~decimalDay, data = input,ylim=range(input$weight,input$Weight_corr),col="red",ylab="weight")
-# points(weight~decimalDay, data = df_rehy[df_rehy$idPot=="321",],  col = "black")
-# legend("topright",legend="corrected weight after irrigation",fill="red")
 
 pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_irrigation.pdf", sep = "_")), width = 10, height = 10)
 x = c(grv$decimalDay,df_rehy$decimalDay)
@@ -279,7 +280,7 @@ y = c(grv$weight,df_rehy$Weight_corr)
 xlim = range(x)
 ylim = range(y)
 
-for (i in inpots){
+for (i in genolist$idPot){
   # i = idpots[3]
   input <- df_rehy[df_rehy$idPot == i,]
   xlim = range(input$decimalDay)
@@ -300,17 +301,6 @@ for (i in inpots){
 dev.off()
 
 df = df_rehy
-# manual correction irrigation:
-# corr 1:
-i ="374"
-# plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=i)
-df$Weight_corr[df$idPot == i & df$ID > 38] <- df$Weight_corr[df$idPot == i & df$ID > 38] - 0.28
-# plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=paste0(i," -corrected manually"))
-# corr 2:
-i ="306"
-# plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=paste0(i))
-df$Weight_corr[df$idPot == i & df$ID %in% c(289:295)] <- df$Weight_corr[df$idPot == i &  df$ID %in% c(289:295)] - 0.35
-# plot(Weight_corr~decimalDay,df[df$idPot ==i,],main=paste0(i," -corrected manually"))
 
 # save irrigation information:
 if (!dir.exists(file.path(dir_Exp, "Processed_data"))) { dir.create(file.path(dir_Exp, "Processed_data")) }
@@ -332,10 +322,10 @@ max_dark = 3.5
 min_light = -0.4
 max_light = 4.5
 
-for (i in inpots){
+for (i in genolist$idPot){
   # i = unique(df$idPot)[1]
   # i = "C2M47-217"
-  # i =inpots[1]
+  # i =genolist$idPot[1]
   options(warn = 1)
   hotspots <- Outliers_v4_2(time = df$decimalDay[df$idPot == as.character(i)], # time input
                             weight = df$Weight_corr[df$idPot == as.character(i)], # weight input
@@ -386,10 +376,9 @@ for (i in inpots){
 
 
 df$outlier[df$side_outlier  | df$obvious_outlier | df$hotspot_outlier] <- T
-stopifnot(nrow(df[df$outlier,])==216) # check with analysis used for publication
 
 pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_gravimetric_outliers.pdf", sep = "_")), width = 10, height = 10)
-for (i in inpots){
+for (i in genolist$idPot){
   
   input <- df[df$idPot == i,]
   plot(Weight_corr~decimalDay,input,type= "n")
@@ -483,8 +472,8 @@ df <- df[order(df$idPot,df$decimalDay),]
 df$SWC <- 0
 for (i in unique(df$idPot)){
   # i = "217"
-  potweight <- swc$poidsPotNonTroue[swc$idPot == i]+swc$poidsPotTroue[swc$idPot == i]
-  drysoilweight <- swc$poidsSolSec[swc$idPot == i]
+  potweight <- swc$nonPerforatedPotWeight[swc$idPot == i]+swc$perforatedPotWeight[swc$idPot == i]
+  drysoilweight <- swc$drySoilWeight[swc$idPot == i]
   df$SWC[df$idPot == i] <- (df$initial_weight[df$idPot == i] - drysoilweight - potweight)/drysoilweight
 }
 
@@ -496,6 +485,7 @@ for (i in 1:nrow(transpi)){
   id = transpi$idPot[i]
   transpi$SWC[i] <- mean(df$SWC[df$idPot == id & df$decimalDay > transpi$min_decimalDay[i] & df$decimalDay < transpi$max_decimalDay[i]]) 
 }
+# head(transpi)
 
 # save output transpiration
 colnames(transpi)[match("Treatment",colnames(transpi))] <- "idWatering" 

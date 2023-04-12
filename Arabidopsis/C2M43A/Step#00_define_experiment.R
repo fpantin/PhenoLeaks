@@ -79,6 +79,12 @@ set_constants_C2M43A <- function ()
   # Duration of the photoperiod (h)
   Pho_Per <- 12
   
+  # Start of the gravimetric experiment (YYYY-MM-DD HH:MM:SS) 
+  from <- as.POSIXct("2018-03-21 13:00:00", tz ="UTC")
+  
+  # End of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
+  to <- as.POSIXct("2018-03-26 12:00:00", tz ="UTC")
+  
   # Duration of the skotoperiod (h)
   # Note that the scripts will not work for diel cycles that do not match 24 h.
   Sko_Per <- 24 - Pho_Per
@@ -95,7 +101,8 @@ set_constants_C2M43A <- function ()
   # End of the proper experiment (d)
   Time_end_exp <- 3+(Pho_Per+3.5)/24 + 1/60/24 # 1 min added to avoid rounding issues (the 'real' value should be included in the interval Time_start_exp:Time_end_exp)
 
-  
+  # time in UTC when the light was switched off and the darkperiod starts (HH:MM:SS, UTC)
+  lightsOFF <-  "20:00:00" 
   
   # Duration covering the rapid stomatal movements at the transitions (min)
   # Corresponds here to the first data point after a day/night transition.
@@ -164,6 +171,9 @@ set_colors_C2M43A <- function ()
 # Call the function
 c(ColorsTrt, ColorsPeriod) := set_colors_C2M43A()
 
+#------------------------------------------------------------------------------#
+# color vector to distinguish between individual pots
+Colors <- c("brown3", "darkblue","darkorange", "cadetblue3", "red","darkolivegreen","chartreuse","darkgrey","chocolate","burlywood","darkkhaki", "darkorchid","deeppink","darkturquoise","darkred","orange")
 
 
 #------------------------------------------------------------------------------#
