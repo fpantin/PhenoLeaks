@@ -62,7 +62,7 @@ rectangle <- function(x,y){
   
   for (d in days){
     # i = 179
-    rect(xleft= d + startdark, xright=d + startdark + darkperiod, ybottom= min(y,na.rm = T), ytop= max(y,na.rm = T)*2, density= NULL, col= color[1], border = NA)
+    rect(xleft= d + startdark, xright=d + startdark + darkperiod, ybottom= min(y,na.rm = T)-min(y,na.rm = T), ytop= max(y,na.rm = T)*2, density= NULL, col= color[1], border = NA)
     
   }
   
