@@ -35,6 +35,69 @@ if (startdark + darkperiod < 1){
 ylab_tr = expression(paste("E"["rosette"], " (mmol m"^-2, " s"^-1, ")"))
 ylab_tr_vpd = expression(paste("E"["rosette"], " (mmol m"^-2, " s"^-1, " KPa"^-1,")"))
 
+#------------------------------------------------------------------------------#
+#             Function to prepare gravimetric data                             #
+#------------------------------------------------------------------------------#
+
+prep_gravi <- function(){
+  grv <- as.data.frame(splitstackshape::cSplit(grv, "idPotManip", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
+  colnames(grv)[match("idPotManip_2",colnames(grv))] <- "idPot" # rename column
+  colnames(grv)[match("After.watering.weight",colnames(grv))] <- "weight" # rename column
+  grv <- grv[,c("idPot","date","weight")]
+  
+  grv$date <- as.POSIXct(strptime(grv$date,format= "%Y-%m-%d %H:%M:%S", tz = "UTC")) 
+  grv$decimalDay <- decimalDay(column=grv$date) # add decimal day
+  grv$hourday <- as.numeric(sub(".*\\.","0.",sprintf("%.10f", round(grv$decimalDay,10)) )) # add decimal hour on day
+  grv$dayofyear = as.integer(grv$decimalDay) # day of the year
+  
+  # filtering
+  grv <- grv[!is.na(grv$weight),]# delete all NA's
+  if(anyDuplicated(grv) > 0){ grv <- grv[!duplicated(grv),] }# remove identical lines
+  grv <- grv[which(grv$date > from & grv$date < to),] #select the data from the start and end of gravimetric experiment
+  
+  # take out days with less than 4 measurements on a single day. Alternive is selecting on "genolist$idPot" (future)
+  grv$idPotManipday <-  paste(grv$idPot, grv$dayofyear, sep="-") # new vector of idPotmanip 
+  grv$idPotManipday <- as.factor(grv$idPotManipday)
+  numreps <- as.data.frame(table(grv$idPotManipday))
+  removepotsday <- unique(numreps[numreps$Freq < 4,]$Var1)
+  grv <- grv[!grv$idPotManipday %in% removepotsday,] # take these pots out
+  grv <- grv[grv$idPot %in% genolist$idPot,] # alternative for selecting only pots with more than 4 measurements per day. Better.
+  
+  # adding more information
+  grv <- grv[order(as.numeric(grv$idPot),grv$decimalDay),] # order per pot and decimalDay
+  grv$ID <- rep(NA,nrow(grv)) # unique chronlogical identifier per measurement per pot
+  grv$Exp_time <- rep(NA,nrow(grv)) # exp time = decimalDay - day number of first day = continuous exp time from 0,.. to 8,.. days 
+  for (i in unique(grv$idPot)){
+    grv[which(grv$idPot == i),]$ID <- seq.int(nrow(grv[which(grv$idPot == i),])) # add pot unique identifiers
+    decday <- as.integer(grv$decimalDay[which(grv$idPot == i)][1] ) # first day number of start experiment
+    grv$Exp_time[grv$idPot == i] <- grv$decimalDay[grv$idPot == i] - decday # Exp time is from onset of the experiment for each pot
+  }
+  # add lightperiod dark night and transition period
+  darklight = 5 # minutes up or down the dark light transition
+  if (night == "inversed"){
+    grv$lightPeriod <- "light"
+    grv$lightPeriod[grv$hourday > startdark & grv$hourday <= startdark + darkperiod] <- "dark"
+    
+    grv$lightPeriod[grv$hourday > startdark - darklight/60/24 & grv$hourday <= startdark + darklight/60/24] <- "darklight"
+    
+    grv$lightPeriod[grv$hourday > enddark - darklight/60/24 & grv$hourday <= enddark + darklight/60/24] <- "darklight"
+  }
+  
+  if (night == "normal"){
+    grv$lightPeriod <- "dark"
+    grv$lightPeriod[grv$hourday > enddark & grv$hourday <= startdark ] <- "light"
+    
+    grv$lightPeriod[grv$hourday > startdark - darklight/60/24 & grv$hourday <= startdark + darklight/60/24] <- "darklight"
+    
+    grv$lightPeriod[grv$hourday > enddark - darklight/60/24 & grv$hourday <= enddark + darklight/60/24] <- "darklight"
+    
+  }
+  grv <- surface_add(input=grv) # add leaf surface per timepoint per pot. 
+  grv <- merge(grv,genolist,by="idPot")
+  grv <- grv[,!colnames(grv) %in% c("idPotManipday")]
+  grv <- grv[order(as.numeric(grv$idPot),grv$decimalDay),]
+  return(grv)
+}
 
 #------------------------------------------------------------------------------#
 #             Function to calculate decimalDay from Posix data                 #
