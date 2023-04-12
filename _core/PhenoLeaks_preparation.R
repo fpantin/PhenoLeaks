@@ -205,7 +205,7 @@ Rehy_Corr_v4 <- function(input, gap){
     # select values based on certain time frame
     beforedater <- middledater - 1*60* timer # add .. hour back in time
     afterdater <- middledater + 1*60* timer # add .. hour
-    # select index values 1 hour before and 1 hour after
+    # select index values 
     dataindex <- selec[input$date[selec] >= beforedater & input$date[selec] <= afterdater]
     
     middledark = as.character(input$lightPeriod[j]) # get the lightperiod 
@@ -275,6 +275,11 @@ Rehy_Corr_v4 <- function(input, gap){
             
             dataindex2 <- selecpoint(timer = 160) #
             
+            if (length(dataindex2) < 2 ){
+              
+              dataindex2 <- selecpoint(timer = 320) #
+            }
+            
             if (length(dataindex2) >= 2 ){
               
               inwei <- input$weight[dataindex2]
@@ -297,6 +302,8 @@ Rehy_Corr_v4 <- function(input, gap){
               }
               # rm(differ,outpred,predat,ols1,indat,inwei)
             }
+            
+            
           }else{outlier <- c(outlier,j+1)}
           # rm(beforeweight,afterweight)
         }
