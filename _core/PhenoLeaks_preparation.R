@@ -195,7 +195,7 @@ surface_add <- function(input){
 #             Function to detect and correct for irrigations                   #
 #------------------------------------------------------------------------------#
 
-Rehy_Corr_v4 <- function(input,gap,jumps){
+Rehy_Corr_v4 <- function(input,gap,jumps="positive"){
   # if jumps is positive, correct only for irrigation (so not other jumps with negative values)
   # if jumps is both, takes into account negative and positive "irrigations"
   
