@@ -133,7 +133,7 @@ genolist$Sowing_decimalDay <- decimalDay(column=genolist$Sowing) # add decimal d
 #------------------------------------------------------------------------------#
 # Leaf surface data
 # need to update this one using raw input file (as for the other experiments)
-surface <- splitstackshape::cSplit(surface, "Label", sep="-", type.convert=F) # the file name column
+surface <- as.data.frame(splitstackshape::cSplit(surface, "Label", sep="-", type.convert=F)) # the file name column
 colnames(surface)[match(c("Label_1", "Label_2"),colnames(surface))] = c("Experiment","idPot")
 surface$Date1 <- as.POSIXct(strptime(surface$Date, format= "%d/%m/%Y %H:%M",tz = "UTC"))
 surface$decimalDay <- decimalDay(column=surface$Date1) # add decimal day
