@@ -38,13 +38,13 @@ for (pkg in c("gplots", "here"))
   library(pkg, character.only = T)
   }
 
-# if (!"ComplexHeatmap" %in% installed.packages()[, "Package"])
-#   { 
-#   if (!"BiocManager" %in% installed.packages()[, "Package"]) { install.packages("BiocManager") }
-#   library("BiocManager")
-#   BiocManager::install("ComplexHeatmap")
-#   }
-# library("ComplexHeatmap")
+if (!"ComplexHeatmap" %in% installed.packages()[, "Package"])
+  {
+  if (!"BiocManager" %in% installed.packages()[, "Package"]) { install.packages("BiocManager") }
+  library("BiocManager")
+  BiocManager::install("ComplexHeatmap")
+  }
+library("ComplexHeatmap")
 
 
 
@@ -102,7 +102,6 @@ dir_Exp <- file.path(here::here(), spcs, idExp)
 #------------------------------------------------------------------------------#
 
 # Import data
-#res <- read.csv(file.path(dir_Exp, "Fitted_data", "results_fit_use_VPD.csv"))
 res <- read.csv(file.path(dir_Exp, "Fitted_data", "results_fit_acclim.csv"))
 res <- cbind(data.frame(idExperiment = idExp), res)
 
@@ -684,191 +683,298 @@ res$idWatering[res$idWatering == "Water stress"] <- "WS"
 
 
 
+#------------------------------------------------------------------------------#
+#                                    Heatmap                                   #
+#------------------------------------------------------------------------------#
+
+#require(ComplexHeatmap)
+#require(gplots)
+
+#------------------------------------------------------------------------------#
+#1# With acclimation
+
+# Filter the phases for low amplitudes (uncomment if required)
+res_dupl <- res
+#res_dupl[res_dupl$A1 < 0.05 & !is.na(res_dupl$A1), c("phi1", "phi1_minus_phi2", "t_day_max_mod", "t_day_max_obs", "t_night_min_mod", "t_night_min_obs")] <- NA
+#res_dupl[res_dupl$A2 < 0.02 & !is.na(res_dupl$A2), c("phi2", "phi1_minus_phi2")] <- NA
+
+
+# Note that "Recovery 2" (acclimated) has the same fitted parameters as "Recovery 1" (acclimating) except for the acclimation slope,
+# which has been set to 0 for "Recovery 2" by the function 'run_fit()' of 'PhenoLeaks_fit.R'.
+# We change it to NA:
+res_dupl$acclim_slope[res_dupl$idPeriod == "Recovery 2"] <- NA
+
+# Create the average matrix
+avg <- aggregate(res_dupl[, !colnames(res_dupl) %in% c("idExperiment", "idGenotype", "idWatering", "idPot", "idPeriod", "diel_trend", "diel_trend_baseline", "t1_fit", "t2_fit", "adjR2", "RMSE", "E_EON_before_obs", "E_EON_before_mod", "A_rapid_op_transition_obs", "A_rapid_op_stable_obs",
+                                                       "E_day_mean_mod", "E_day_mean_obs", "E_night_mean_mod", "E_night_mean_obs", "E_EON_mod", "E_EON_obs", "E_day_max_obs", "E_day_max_mod", "E_night_min_obs", "E_night_min_mod", "phi1_minus_phi2", "A1_plus_A2")],
+                 by = list (idWatering = res_dupl$idWatering, idGenotype = res_dupl$idGenotype, idPeriod = res_dupl$idPeriod),
+                 FUN = mean, na.rm = T)
+mat <- as.matrix(avg[-(1:3)])
+rownames(mat) <- paste(avg[,1], avg[,2], avg[,3])
+
+
+# Set vector of row names
+LABROW <- c(expression(paste(italic("abcb14"), "-1", sep = "")),
+            expression(paste(italic("abcb14"), "-2", sep = "")),
+            expression(italic("amy3")),
+            expression(italic("amy3 bam1")),
+            expression(italic("bam1")),
+            expression(italic("bam1 bam3")),
+            expression(italic("bam3")),
+            expression("Col-0 (WS)"),
+            expression("Col-0"),
+            expression("Col-0"^"†"),
+            expression(italic("dpe1")),
+            expression(italic("dpe2")),
+            expression(italic("isa1")^"†"),
+            expression(italic("mex1")),
+            expression(italic("pgi")),
+            expression(paste(italic("pgm"), " (WS)", sep = "")),
+            expression(italic("pgm")),
+            expression(italic("sex1")),
+            expression(italic("ss4")^"†"))
+
+# Set vector of column names
+LABCOL <- set_names_units("names")[match(colnames(mat), set_names_units("par"))] 
+
+# Set the colors for the traits
+trait_colors <- c(palette("default")[1], palette("default")[3], palette("default")[3],
+                  "darkorange", "darkorange3", "darkorange3", "darkorange",
+                  "deepskyblue2", "dodgerblue4", "dodgerblue4", "deepskyblue2",
+                  "aquamarine4", palette("default")[3], "coral3", "coral3", "coral1", "coral1", "coral4",
+                  "darkorange", "darkorange3", "darkorange3", "darkorange",
+                  "deepskyblue2", "dodgerblue4", "dodgerblue4", "deepskyblue2",
+                  "palegreen3", "palegreen3")
+
+# Set the colors for the periods
+vector_colperiod <- ColorsPeriod$col
+names(vector_colperiod) <- ColorsPeriod$idPeriod
+
+
+#-----------------------------#
+#1.1# Well-watered only
+
+mat_WW <- mat[avg$idWatering == "WW", ]
+mat_WW <- scale(mat_WW)
+
+LABROW_WW <- LABROW[!grepl("WS", LABROW)]
+
+row_ha <- rowAnnotation(Environment = avg$idPeriod[avg$idWatering == "WW"],
+                        col = list(Environment = vector_colperiod),
+                        show_annotation_name = F,
+                        annotation_legend_param = list(Environment = list(labels = c("Control", expression("High CO"[2]), "Low light", "Recov.1", "Recov.2"),
+                                                                          nrow = 1,
+                                                                          title_position = "topleft",
+                                                                          labels_gp = gpar(fontsize = 8),
+                                                                          title_gp = gpar(fontsize = 10, fontface = "plain"))))
+
+hmp_acclim_WW <- Heatmap(mat_WW, name = "Trait value (scaled and centered)",
+                         col = colorpanel(256, "purple", "black", "orange"),
+                         #rect_gp = gpar(col = "gray", lwd = 0.01),
+                         row_labels = rep(LABROW_WW, 5),
+                         column_labels = LABCOL,
+                         row_names_gp = gpar(fontsize = 7, col = ColorsTrt$col[match(avg$idGenotype[avg$idWatering == "WW"], ColorsTrt$idGenotype)]),
+                         column_names_gp = gpar(fontsize = 8, col = trait_colors),
+                         column_names_rot = 45,
+                         left_annotation = row_ha,
+                         heatmap_legend_param = list(direction = "horizontal",
+                                                     title_position = "topcenter",
+                                                     legend_width = unit(6, "cm"),
+                                                     title_gp = gpar(fontsize = 10, fontface = "plain"),
+                                                     labels_gp = gpar(fontsize = 8)),
+                         row_split = 4, column_split = 4,
+                         #row_gap = unit(c(2, 4, 2), "pt"), column_gap = unit(c(2, 4, 2), "pt"),
+                         row_title = NULL, column_title = "Model with acclimation - well-watered only")
+
+#dev.new(width = 6.5, height = 7.5, unit = "in", noRStudioGD = T)
+#draw(hmp_acclim_WW, heatmap_legend_side = "bottom")
+
+
+#-----------------------------#
+#1.2# Including water stress
+
+mat_all <- scale(mat)
+
+row_ha <- rowAnnotation(Environment = avg$idPeriod,
+                        col = list(Environment = vector_colperiod),
+                        show_annotation_name = F,
+                        annotation_legend_param = list(Environment = list(labels = c("Control", expression("High CO"[2]), "Low light", "Recov.1", "Recov.2"),
+                                                                          nrow = 1,
+                                                                          title_position = "topleft",
+                                                                          labels_gp = gpar(fontsize = 8),
+                                                                          title_gp = gpar(fontsize = 10, fontface = "plain"))))
+
+hmp_acclim <- Heatmap(mat_all, name = "Trait value (scaled and centered)",
+                      col = colorpanel(256, "purple", "black", "orange"),
+                      #rect_gp = gpar(col = "gray", lwd = 0.01),
+                      row_labels = rep(LABROW, 5),
+                      column_labels = LABCOL,
+                      row_names_gp = gpar(fontsize = 7, col = ColorsTrt$col[match(avg$idGenotype, ColorsTrt$idGenotype)]),
+                      column_names_gp = gpar(fontsize = 8, col = trait_colors),
+                      column_names_rot = 45,
+                      left_annotation = row_ha,
+                      heatmap_legend_param = list(direction = "horizontal",
+                                                  title_position = "topcenter",
+                                                  legend_width = unit(6, "cm"),
+                                                  title_gp = gpar(fontsize = 10, fontface = "plain"),
+                                                  labels_gp = gpar(fontsize = 8)),
+                      row_split = 4, column_split = 4,
+                      #row_gap = unit(c(2, 4, 2), "pt"), column_gap = unit(c(2, 4, 2), "pt"),
+                      row_title = NULL, column_title = "Model with acclimation - including water stress (WS)")
+
+#dev.new(width = 6.5, height = 7.5, unit = "in", noRStudioGD = T)
+#draw(hmp_acclim, heatmap_legend_side = "bottom")
+
+
+#------------------------------------------------------------------------------#
+#2# Without acclimation
+
+# Import data without acclimation
+res <- read.csv(file.path(dir_Exp, "Fitted_data", "results_fit.csv"))
+res <- cbind(data.frame(idExperiment = idExp), res)
+
+# Back to 'idPeriod' former name (for compatibility)
+res$idPeriod[res$idPeriod == "High CO2 acclimating"] <- "High CO2"
+res$idPeriod[res$idPeriod == "Low light acclimating"] <- "Low light"
+res$idPeriod[res$idPeriod == "Recovery acclimating"] <- "Recovery 1"
+res$idPeriod[res$idPeriod == "Recovery acclimated"] <- "Recovery 2"
+
+# Compute new variables
+res$phi1_minus_phi2 <- res$phi1-res$phi2
+res$A1_plus_A2 <- res$A1+res$A2
+res$daily_amp_mod <- res$E_day_max_mod - res$E_night_min_mod
+res$daily_amp_obs <- res$E_day_max_obs - res$E_night_min_obs
+
+# Switch to hours (since the start of the day or night) where relevant
+res[, c("phi1", "phi2", "phi1_minus_phi2", "t_day_max_mod", "t_day_max_obs")] <- res[, c("phi1", "phi2", "phi1_minus_phi2", "t_day_max_mod", "t_day_max_obs")]*24
+res[, c("t_night_min_mod", "t_night_min_obs")] <- (res[, c("t_night_min_mod", "t_night_min_obs")] - 0.5) *24
+
+# Remove one aberrant phase fit (mex1 #349 low light)
+# hist(res$phi1)
+# hist(res$phi1[res$phi1 <= (-1)])
+# hist(res$phi1[res$phi1 <= (-2)]) # only one observation below -4h for phi1, reaching -11h...
+# res[which.min(res$phi1), ]
+res[which.min(res$phi1), c("phi1", "phi2", "phi1_minus_phi2")] <- NA
+
+
+# Filter the phases for low amplitudes (uncomment if required)
+res_dupl <- res
+#res_dupl[res_dupl$A1 < 0.05 & !is.na(res_dupl$A1), c("phi1", "phi1_minus_phi2", "t_day_max_mod", "t_day_max_obs", "t_night_min_mod", "t_night_min_obs")] <- NA
+#res_dupl[res_dupl$A2 < 0.02 & !is.na(res_dupl$A2), c("phi2", "phi1_minus_phi2")] <- NA
+
+# Create the average matrix
+avg <- aggregate(res_dupl[, !colnames(res_dupl) %in% c("idExperiment", "idGenotype", "idWatering", "idPot", "idPeriod", "diel_trend", "diel_trend_baseline", "t1_fit", "t2_fit", "adjR2", "RMSE", "E_EON_before_obs", "E_EON_before_mod", "A_rapid_op_transition_obs", "A_rapid_op_stable_obs",
+                                                       "E_day_mean_mod", "E_day_mean_obs", "E_night_mean_mod", "E_night_mean_obs", "E_EON_mod", "E_EON_obs", "E_day_max_obs", "E_day_max_mod", "E_night_min_obs", "E_night_min_mod", "phi1_minus_phi2", "A1_plus_A2",
+                                                       "acclim_slope")],
+                 by = list (idWatering = res_dupl$idWatering, idGenotype = res_dupl$idGenotype, idPeriod = res_dupl$idPeriod),
+                 FUN = mean, na.rm = T)
+mat <- as.matrix(avg[-(1:3)])
+rownames(mat) <- paste(avg[,1], avg[,2], avg[,3])
+
+
+# Set vector of column names
+LABCOL <- set_names_units("names")[match(colnames(mat), set_names_units("par"))] 
+
+# Set the colors for the traits
+trait_colors <- c(palette("default")[1], palette("default")[3], palette("default")[3],
+                  "darkorange", "darkorange3", "darkorange3", "darkorange",
+                  "deepskyblue2", "dodgerblue4", "dodgerblue4", "deepskyblue2",
+                  "aquamarine4", palette("default")[3], "coral3", "coral3", "coral1", "coral1",
+                  "darkorange", "darkorange3", "darkorange3", "darkorange",
+                  "deepskyblue2", "dodgerblue4", "dodgerblue4", "deepskyblue2",
+                  "palegreen3", "palegreen3")
 
 
 
+#-----------------------------#
+#2.1# Well-watered only
+
+# This heatmap is similar to the one presented in the first bioRxiv submission:
+# https://www.biorxiv.org/content/10.1101/2022.10.07.511256v1
+# except that:
+#   - more data are available
+#       * retrieval of plants that were initially discarded thanks to new outlier detection process
+#       * no filtering of phase for low amplitude (which influences the position of mex1 low light and high CO2, but not the clustering of parameters)
+#   - the rows and columns are not manually reordered
+
+mat_WW <- mat[avg$idWatering == "WW", ]
+mat_WW <- scale(mat_WW)
+
+LABROW_WW <- LABROW[!grepl("WS", LABROW)]
+
+row_ha <- rowAnnotation(Environment = avg$idPeriod[avg$idWatering == "WW"],
+                        col = list(Environment = vector_colperiod),
+                        show_annotation_name = F,
+                        annotation_legend_param = list(Environment = list(labels = c("Control", expression("High CO"[2]), "Low light", "Recov.1", "Recov.2"),
+                                                                          nrow = 1,
+                                                                          title_position = "topleft",
+                                                                          labels_gp = gpar(fontsize = 8),
+                                                                          title_gp = gpar(fontsize = 10, fontface = "plain"))))
+
+hmp_WW <- Heatmap(mat_WW, name = "Trait value (scaled and centered)",
+                  col = colorpanel(256, "purple", "black", "orange"),
+                  #rect_gp = gpar(col = "gray", lwd = 0.01),
+                  row_labels = rep(LABROW_WW, 5),
+                  column_labels = LABCOL,
+                  row_names_gp = gpar(fontsize = 7, col = ColorsTrt$col[match(avg$idGenotype[avg$idWatering == "WW"], ColorsTrt$idGenotype)]),
+                  column_names_gp = gpar(fontsize = 8, col = trait_colors),
+                  column_names_rot = 45,
+                  left_annotation = row_ha,
+                  heatmap_legend_param = list(direction = "horizontal",
+                                              title_position = "topcenter",
+                                              legend_width = unit(6, "cm"),
+                                              title_gp = gpar(fontsize = 10, fontface = "plain"),
+                                              labels_gp = gpar(fontsize = 8)),
+                  row_split = 4, column_split = 4,
+                  #row_gap = unit(c(2, 4, 2), "pt"), column_gap = unit(c(2, 4, 2), "pt"),
+                  row_title = NULL, column_title = "Model without acclimation - well-watered only")
+
+#dev.new(width = 6.5, height = 7.5, unit = "in", noRStudioGD = T)
+#draw(hmp_WW, heatmap_legend_side = "bottom")
 
 
-# #------------------------------------------------------------------------------#
-# #                                    Heatmap                                   #
-# #------------------------------------------------------------------------------#
-# 
-# 
-# #require(ComplexHeatmap)
-# #require(gplots)
-# 
-# # Filter the phases for low amplitudes
-# res_dupl <- res
-# res_dupl[res_dupl$A1 < 0.05 & !is.na(res_dupl$A1), c("phi1", "phi1_minus_phi2", "t_day_max_mod", "t_day_max_obs", "t_night_min_mod", "t_night_min_obs")] <- NA
-# res_dupl[res_dupl$A2 < 0.02 & !is.na(res_dupl$A2), c("phi2", "phi1_minus_phi2")] <- NA
-# 
-# # Create the average matrix
-# avg <- aggregate(res_dupl[, -which(colnames(res_dupl) %in% c("idExperiment", "idGenotype", "idWatering", "idPot", "idPeriod", "diel_trend", "diel_trend_baseline", "t1_fit", "t2_fit", "adjR2", "RMSE", "E_EON_before_obs", "E_EON_before_mod", "A_rapid_op_transition_obs", "A_rapid_op_stable_obs"))],
-#                  by = list (idWatering = res_dupl$idWatering, idGenotype = res_dupl$idGenotype, idPeriod = res_dupl$idPeriod),
-#                  FUN = mean, na.rm = T)
-# mat <- as.matrix(avg[-(1:3)])
-# mat <- mat[, !colnames(mat) %in% c("E_day_mean_mod", "E_day_mean_obs", "E_night_mean_mod", "E_night_mean_obs", "E_EON_mod", "E_EON_obs", "E_day_max_obs", "E_day_max_mod", "E_night_min_obs", "E_night_min_mod", "phi1_minus_phi2", "A1_plus_A2")]
-# row.names(mat) <- paste(avg[,1], avg[,2], avg[,3])
-# 
-# # Set vector of row names
-# LABROW <- c(expression(paste(italic("abcb14"), "-1", sep = "")),
-#             expression(paste(italic("abcb14"), "-2", sep = "")),
-#             expression(italic("amy3")),
-#             expression(italic("amy3 bam1")),
-#             expression(italic("bam1")),
-#             expression(italic("bam1 bam3")),
-#             expression(italic("bam3")),
-#             expression("Col-0 (WS)"),
-#             expression("Col-0"),
-#             expression("Col-0"^"†"),
-#             expression(italic("dpe1")),
-#             expression(italic("dpe2")),
-#             expression(italic("isa1")^"†"),
-#             expression(italic("mex1")),
-#             expression(italic("pgi")),
-#             expression(paste(italic("pgm"), " (WS)", sep = "")),
-#             expression(italic("pgm")),
-#             expression(italic("sex1")),
-#             expression(italic("ss4")^"†"))     
-# 
-# # Set vector of column names
-# LABCOL <- c(expression("E"["diel"]),
-#             expression("A"["rapid op"]),
-#             expression("A"["rapid clo"]),
-#             expression("t"["day max"]),
-#             expression(sigma["day"]),
-#             expression(Delta["day"]),
-#             expression(Sigma["preclo"]),
-#             expression("t"["night min"]),
-#             expression(sigma["night"]),
-#             expression(Delta["night"]),
-#             expression(Sigma["preop"]),
-#             expression("E"["mean"]),
-#             expression("A"["SQW"]),
-#             expression("A"["1"]),
-#             expression(varphi["1"]),
-#             expression("A"["2"]),
-#             expression(varphi["2"]),
-#             expression(hat("t")["day max"]),
-#             expression(hat(sigma)["day"]),
-#             expression(hat(Delta)["day"]),
-#             expression(hat(Sigma)["preclo"]),
-#             expression(hat("t")["night min"]),
-#             expression(hat(sigma)["night"]),
-#             expression(hat(Delta)["night"]),
-#             expression(hat(Sigma)["preop"]),
-#             expression(hat("A")["diel"]),
-#             expression("A"["diel"]))
-# 
-# # Set vector of column names for PPTX export
-# # (several symbols are not supported by 'graph2ppt()', need to add them manually on the PPTX file)
-# LABCOL_PPTX <- c(expression("E"["diel"]),
-#                  expression("A"["rapid op"]),
-#                  expression("A"["rapid clo"]),
-#                  expression("t"["day max"]),
-#                  expression("s"["day"]),#expression(sigma["day"]),
-#                  expression("D"["day"]),#expression(Delta["day"]),
-#                  expression("S"["preclo"]),#expression(Sigma["preclo"]),
-#                  expression("t"["night min"]),
-#                  expression("s"["night"]),#expression(sigma["night"]),
-#                  expression("D"["night"]),#expression(Delta["night"]),
-#                  expression("S"["preop"]),#expression(Sigma["preop"]),
-#                  expression("E"["mean"]),
-#                  expression("A"["SQW"]),
-#                  expression("A"["1"]),
-#                  expression("j"["1"]),#expression(varphi["1"]),
-#                  expression("A"["2"]),
-#                  expression("j"["2"]),#expression(varphi["2"]),
-#                  expression("t"["day max"]),#expression(hat("t")["day max"]),
-#                  expression("s"["day"]),#expression(hat(sigma)["day"]),
-#                  expression("D"["day"]),#expression(hat(Delta)["day"]),
-#                  expression("S"["preclo"]),#expression(hat(Sigma)["preclo"]),
-#                  expression("t"["night min"]),#expression(hat("t")["night min"]),
-#                  expression("s"["night"]),#expression(hat(sigma)["night"]),
-#                  expression("D"["night"]),#expression(hat(Delta)["night"]),
-#                  expression("S"["preop"]),#expression(hat(Sigma)["preop"]),
-#                  expression("A"["diel"]),#expression(hat("A")["diel"]),
-#                  expression("A"["diel"]))
-# 
-# 
-# # Set the colors for the traits
-# trait_colors <- c(palette("default")[1], palette("default")[3], palette("default")[3],
-#                   "darkorange", "darkorange3", "darkorange3", "darkorange",
-#                   "deepskyblue2", "dodgerblue4", "dodgerblue4", "deepskyblue2",
-#                   "aquamarine4", palette("default")[3], "coral3", "coral3", "coral1", "coral1",
-#                   "darkorange", "darkorange3", "darkorange3", "darkorange",
-#                   "deepskyblue2", "dodgerblue4", "dodgerblue4", "deepskyblue2",
-#                   "palegreen3", "palegreen3")
-# 
-# # Set the colors for the periods
-# vector_colperiod <- ColorsPeriod$col
-# names(vector_colperiod) <- ColorsPeriod$idPeriod
-# 
-# 
-# #1# Heatmap without water stress
-# mat_WW <- mat[avg$idWatering == "WW", ]
-# mat_WW <- scale(mat_WW)
-# 
-# LABROW_WW <- LABROW[!grepl("WS", LABROW)]
-# 
-# row_ha <- rowAnnotation(Environment = avg[avg$idWatering == "WW", 3],
-#                         col = list(Environment = vector_colperiod),
-#                         show_annotation_name = F,
-#                         annotation_legend_param = list(Environment = list(labels = c("Control", expression("High CO"[2]), "Low light", "Recov.1", "Recov.2"),
-#                                                                           nrow = 1,
-#                                                                           title_position = "topleft",
-#                                                                           labels_gp = gpar(fontsize = 8),
-#                                                                           title_gp = gpar(fontsize = 10, fontface = "plain"))))
-# 
-# hmp <- Heatmap(mat_WW, name = "Trait value (scaled and centered)",
-#                col = colorpanel(256, "purple", "black", "orange"),
-#                #rect_gp = gpar(col = "gray", lwd = 0.01),
-#                row_labels = rep(LABROW_WW, 5), 
-#                column_labels = LABCOL,
-#                row_names_gp = gpar(fontsize = 7, col = ColorsTrt$col[match(avg[avg$idWatering == "WW", 2], ColorsTrt$idGenotype)]),
-#                column_names_gp = gpar(fontsize = 8, col = trait_colors),
-#                column_names_rot = 45,
-#                left_annotation = row_ha,
-#                heatmap_legend_param = list(direction = "horizontal",
-#                                            title_position = "topcenter",
-#                                            legend_width = unit(6, "cm"),
-#                                            title_gp = gpar(fontsize = 10, fontface = "plain"),
-#                                            labels_gp = gpar(fontsize = 8)),
-#                # cluster_rows = reorder(as.dendrogram(hclust(dist(mat))),
-#                #                        wts = ifelse(rownames(mat) == "pgm-1 0-1-2", 0, 1) + ifelse(rownames(mat) == "dpe2-5 0-1-2", 1, 0),
-#                #                        agglo.FUN = mean),
-#                # cluster_columns = reorder(as.dendrogram(hclust(dist(t(mat)))),
-#                #                           wts = ifelse(colnames(mat) == "A_SQW", 0, 2) + ifelse(colnames(mat) == "E_diel_obs", 0, 1) + ifelse(colnames(mat) == "sigma_day_obs", 1, 0) + ifelse(colnames(mat) == "A2", 2, 0) + ifelse(colnames(mat) == "Sigma_preop_mod", 3, 0),
-#                #                           agglo.FUN = mean),
-#                row_split = 5, column_split = 4,
-#                #row_gap = unit(c(2, 4, 2), "pt"), column_gap = unit(c(2, 4, 2), "pt"),
-#                row_title = NULL, column_title = NULL)
-# 
-# pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#05d_heatmap_WW.pdf", sep = "_")), width = 6.5, height = 7.5)
-# draw(hmp, heatmap_legend_side = "top")
-# dev.off()
-# 
-# dev.new(width = 6.5, height = 7.5, unit = "in", noRStudioGD = T)
-# draw(hmp, heatmap_legend_side = "top")
-# 
-# graph2ppt(file = "Output/Heatmap.pptx", paper = "A4", orient = "portrait", width = 6.5, height = 7.5)
-# 
-# 
-# 
-# 
-# 
-# 
-# #2# With water stress
-# 
-# mat_all <- scale(mat)
-# 
-# row_ha <- rowAnnotation(Environment = avg[,3],
-#                         col = list(Environment = vector_colperiod),
-#                         show_annotation_name = F,
-#                         annotation_legend_param = list(Environment = list(labels = c("Control", expression("High CO"[2]), "Low light", "Recov.1", "Recov.2"),
-#                                                                           nrow = 1,
-#                                                                           title_position = "topleft",
-#                                                                           labels_gp = gpar(fontsize = 8),
-#                                                                           title_gp = gpar(fontsize = 10, fontface = "plain"))))
+#-----------------------------#
+#2.2# Including water stress
+
+mat_all <- scale(mat)
+
+row_ha <- rowAnnotation(Environment = avg$idPeriod,
+                        col = list(Environment = vector_colperiod),
+                        show_annotation_name = F,
+                        annotation_legend_param = list(Environment = list(labels = c("Control", expression("High CO"[2]), "Low light", "Recov.1", "Recov.2"),
+                                                                          nrow = 1,
+                                                                          title_position = "topleft",
+                                                                          labels_gp = gpar(fontsize = 8),
+                                                                          title_gp = gpar(fontsize = 10, fontface = "plain"))))
+
+hmp <- Heatmap(mat_all, name = "Trait value (scaled and centered)",
+               col = colorpanel(256, "purple", "black", "orange"),
+               #rect_gp = gpar(col = "gray", lwd = 0.01),
+               row_labels = rep(LABROW, 5),
+               column_labels = LABCOL,
+               row_names_gp = gpar(fontsize = 7, col = ColorsTrt$col[match(avg$idGenotype, ColorsTrt$idGenotype)]),
+               column_names_gp = gpar(fontsize = 8, col = trait_colors),
+               column_names_rot = 45,
+               left_annotation = row_ha,
+               heatmap_legend_param = list(direction = "horizontal",
+                                           title_position = "topcenter",
+                                           legend_width = unit(6, "cm"),
+                                           title_gp = gpar(fontsize = 10, fontface = "plain"),
+                                           labels_gp = gpar(fontsize = 8)),
+               row_split = 4, column_split = 4,
+               #row_gap = unit(c(2, 4, 2), "pt"), column_gap = unit(c(2, 4, 2), "pt"),
+               row_title = NULL, column_title = "Model without acclimation - including water stress (WS)")
+
+#dev.new(width = 6.5, height = 7.5, unit = "in", noRStudioGD = T)
+#draw(hmp, heatmap_legend_side = "bottom")
 
 
+
+#------------------------------------------------------------------------------#
+# Plot the heatmaps in a pdf file
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#05c_heatmaps.pdf", sep = "_")), width = 6.5, height = 7.5)
+draw(hmp_acclim_WW, heatmap_legend_side = "bottom")
+draw(hmp_acclim, heatmap_legend_side = "bottom")
+draw(hmp_WW, heatmap_legend_side = "bottom")
+draw(hmp, heatmap_legend_side = "bottom")
+dev.off()
