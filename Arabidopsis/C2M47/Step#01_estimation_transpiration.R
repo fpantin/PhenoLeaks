@@ -143,7 +143,7 @@ surf_coef <- surf_fit(surface) # calculate the statistical model that fits best 
 # Soil water content data
 if (colnames(swc)[1] == "idPotManip"){
   # when french version was downloaded
-  swc <- as.data.frame(splitstackshape::cSplit(swc, "idPot", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
+  swc <- as.data.frame(splitstackshape::cSplit(swc, "idPotManip", sep="-",type.convert = F)) # split colum with idPotManip to get idPot, need to add as.data.frame to bring back from table to dataframe.
   colnames(swc)[match("idPotManip_2",colnames(swc))] <- "idPot"
   colnames(swc)[match("poidsPotNonTroue",colnames(swc))] <- "nonPerforatedPotWeight"
   colnames(swc)[match("poidsPotTroue",colnames(swc))] <- "perforatedPotWeight"
