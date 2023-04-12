@@ -250,7 +250,7 @@ Rehy_Corr_v4 <- function(input, gap){
       # for every measurement for this pot...
       # j are index numbers!! not ID numbers
       # j = 220
-      if(!j %in% outlier){ # do not get why this conditions exists, no use I think
+      if(!j %in% outlier){ # this is when there is one obvious outlier for which we do not calculate the difference for the next point
         beforeweight = input$weight[j]
         afterweight = input$weight[j + 1]
         diff1 = beforeweight -  afterweight
