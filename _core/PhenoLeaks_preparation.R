@@ -195,7 +195,9 @@ surface_add <- function(input){
 #             Function to detect and correct for irrigations                   #
 #------------------------------------------------------------------------------#
 
-Rehy_Corr_v4 <- function(input, gap){
+Rehy_Corr_v4 <- function(input,gap,jumps){
+  # if jumps is positive, correct only for irrigation (so not other jumps with negative values)
+  # if jumps is both, takes into account negative and positive "irrigations"
   
   #--------------------------------------------#
   # Detection
@@ -210,18 +212,40 @@ Rehy_Corr_v4 <- function(input, gap){
     
     middledark = as.character(input$lightPeriod[j]) # get the lightperiod 
     # reselect the index base on light/dark (comparison only made with similar light/dark based on frequency)
-    
     inputdark <- input$lightPeriod[dataindex] 
-    dataindex1 <- dataindex[inputdark %in% c(middledark,"darklight")]
-    dataindex2 <- dataindex1[-match(j,dataindex1)] # without the point
     
-    # when 
-    dataindex3 <- dataindex2[dataindex2 > j] # and after the point of the difference
-    
-    if (length(dataindex3) == 0){ # when the irrigation is at the day night transition and middledark =! as points afterwards
-      dataindex3 <- dataindex2[dataindex2 < j] # and before the point of the difference
+    if(middledark == "darklight"){
+      dataindex1 <- dataindex[inputdark %in% c(input$lightPeriod[j-1],"darklight")] # take the lightperiod which was before! 
+    }else{
+      dataindex1 <- dataindex[inputdark %in% c(middledark,"darklight")]
     }
     
+    dataindex2 <- dataindex1[dataindex1 > j] # and after the point of the difference
+    info <- "after"
+    
+    if (length(dataindex2) < 2){ # when the irrigation is at the day night transition and middledark =! as points afterwards
+      beforedater <- middledater - 1*60* timer*2 # add .. hour back in time
+      afterdater <- middledater + 1*60* timer*2 # add .. hour
+      dataindex <- selec[input$date[selec] >= beforedater & input$date[selec] <= afterdater]
+      middledark = as.character(input$lightPeriod[j]) # get the lightperiod 
+      # reselect the index base on light/dark (comparison only made with similar light/dark based on frequency)
+      inputdark <- input$lightPeriod[dataindex] 
+      if(middledark == "darklight"){
+        dataindex1 <- dataindex[inputdark %in% c(input$lightPeriod[j-1],"darklight")] # take the lightperiod which was before! 
+      }else{
+        dataindex1 <- dataindex[inputdark %in% c(middledark,"darklight")]
+      }
+      dataindex2 <- dataindex1[dataindex1 > j] # and after the point of the difference
+    }
+    
+    if (length(dataindex2) < 2){ # still smaller, means that in the same photoperiod no points
+      beforedater <- middledater - 1*60* timer # add .. hour back in time
+      afterdater <- middledater + 1*60* timer # add .. hour
+      dataindex <- selec[input$date[selec] >= beforedater & input$date[selec] <= afterdater]
+      dataindex2 <- dataindex[dataindex < j] # and before the point of the difference, NOT the point itself to avoid outlier sensibility
+      info <- "before"
+      }
+    return(c(dataindex2,info))
   }
   
   rehydata <- data.frame(idPot = NULL, 
@@ -229,10 +253,11 @@ Rehy_Corr_v4 <- function(input, gap){
                          weight_after = NULL,
                          predicted_water_add = NULL,
                          from_index = NULL,
-                         decimalDay = NULL)
+                         decimalDay = NULL,
+                         note = NULL)
   
   for (id in unique(input$idPot)){
-    # id = 77
+    # id = 104
     # id = unique(input$idPot)[1]
     selec <- which(input$idPot == id) # select the index numbers (not ID col!). 
     #selec = selec[selec > 161]
@@ -241,7 +266,7 @@ Rehy_Corr_v4 <- function(input, gap){
       
       # for every measurement for this pot...
       # j are index numbers!! not ID numbers
-      # j = 6444
+      # j = 4530
       if(!j %in% outlier){ # this is when there is one obvious outlier for which we do not calculate the difference for the next point
         beforeweight = input$weight[j]
         afterweight = input$weight[j + 1]
@@ -263,43 +288,37 @@ Rehy_Corr_v4 <- function(input, gap){
             # future: test also if the initial j is correct (may be already affected)
             
             # next point is good point 
+            out <- selecpoint(timer = 160) #
+            if(length(out)>1){
+              dataindex2 <- as.numeric(out[1:(length(out)-1)])
+              info <- out[length(out)]
+            }else{dataindex2 <- integer()}
             
-            dataindex2 <- selecpoint(timer = 160) #
-            
-            if (length(dataindex2) < 2 ){
-              
-              dataindex2 <- selecpoint(timer = 320) #
-            }
-            
-            if (length(dataindex2) >= 2 ){
+            if (length(dataindex2) >= 2){
               
               inwei <- input$weight[dataindex2]
               indat <- input$decimalDay[dataindex2]
               
               ols1 <- lm(inwei ~ indat)
-              predat <- input$decimalDay[j+1] # for the date j+1!
               
-              outpred <- predict(ols1,data.frame(indat = predat))
-              
-              differ <- diff(c(outpred,beforeweight))
-              
-              if(differ > gap){ # when the points afterwards used!
+              if(info == "after"){ # points used after j (classic)
+                predat <- input$decimalDay[j+1] # for the date j
+                outpred <- predict(ols1,data.frame(indat = predat))
+                differ <- afterweight - outpred # compare prediction with real value for j
+              }
+              if(info == "before"){# points used before j (when not enough points in same photoperiod)
+                predat <- input$decimalDay[j+1] # for the date j+1
+                outpred <- predict(ols1,data.frame(indat = predat))
+                differ <- afterweight - outpred # compare prediction with augmented value for j
+              }
+              if(differ > gap){ 
                 rehydata <- rbind(rehydata, data.frame(idPot = id, 
                                                        weight_before = beforeweight,
-                                                       weight_after = input$weight[j+1],
+                                                       weight_after = afterweight,
                                                        predicted_water_add = differ,
                                                        from_id = input$ID[j],
-                                                       decimalDay = predat))
-              }else{ # when the points before were used!
-                differ <- diff(c(outpred,afterweight))
-                if(differ > gap){ # if this value is larger than gap
-                rehydata <- rbind(rehydata, data.frame(idPot = id, 
-                                                       weight_before = beforeweight,
-                                                       weight_after = input$weight[j+1],
-                                                       predicted_water_add = differ,
-                                                       from_id = input$ID[j],
-                                                       decimalDay = predat))
-                }
+                                                       decimalDay = predat,
+                                                       note = info))
               }
               # rm(differ,outpred,predat,ols1,indat,inwei)
             }
@@ -318,11 +337,11 @@ Rehy_Corr_v4 <- function(input, gap){
   
   
   #--------------------------------------------#
-  rehydata <- rehydata[rehydata$predicted_water_add>0,]
-  
   # Correction
   input$Weight_corr <- input$weight
-  
+  if (jumps == "positive"){ # only real irrigations (increase in weight)
+    rehydata <- rehydata[rehydata$predicted_water_add >0,]
+  }
   
   for (i in 1:length(rehydata$idPot)){
     # i = 1
