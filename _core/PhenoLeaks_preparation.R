@@ -292,12 +292,14 @@ Rehy_Corr_v4 <- function(input, gap){
                                                        decimalDay = predat))
               }else{ # when the points before were used!
                 differ <- diff(c(outpred,afterweight))
+                if(differ > gap){ # if this value is larger than gap
                 rehydata <- rbind(rehydata, data.frame(idPot = id, 
                                                        weight_before = beforeweight,
                                                        weight_after = input$weight[j+1],
                                                        predicted_water_add = differ,
                                                        from_id = input$ID[j],
                                                        decimalDay = predat))
+                }
               }
               # rm(differ,outpred,predat,ols1,indat,inwei)
             }
