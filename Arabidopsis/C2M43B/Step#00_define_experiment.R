@@ -76,6 +76,12 @@ set_constants_C2M43B <- function ()
   # Name of the experiment
   idExp <- "C2M43B"
 
+  # Start of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
+  from <- as.POSIXct("2018-04-11 10:00:00", tz ="UTC")
+  
+  # End of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
+  to <- as.POSIXct("2018-04-18 11:00:00", tz ="UTC")
+  
   # Duration of the photoperiod (h)
   Pho_Per <- 12
   
@@ -94,8 +100,9 @@ set_constants_C2M43B <- function ()
   
   # End of the proper experiment (d)
   Time_end_exp <- 5 + 2/24 + 1/60/24 # 1 min added to avoid rounding issues (the 'real' value should be included in the interval Time_start_exp:Time_end_exp)
-
   
+  # time in UTC when the light was switched off and the darkperiod starts (HH:MM:SS)
+  lightsOFF <-  "20:00:00" 
   
   # Duration covering the rapid stomatal movements at the transitions (min)
   # Corresponds here to the first data point after a day/night transition.
@@ -170,6 +177,9 @@ set_colors_C2M43B <- function ()
 c(ColorsTrt, ColorsPeriod) := set_colors_C2M43B()
 
 
+#------------------------------------------------------------------------------#
+# color vector to distinguish between individual pots
+Colors <- c("brown3", "darkblue","darkorange", "cadetblue3", "red","darkolivegreen","chartreuse","darkgrey","chocolate","burlywood","darkkhaki", "darkorchid","deeppink","darkturquoise","darkred","orange")
 
 #------------------------------------------------------------------------------#
 #                             Check irrigation data                            #
