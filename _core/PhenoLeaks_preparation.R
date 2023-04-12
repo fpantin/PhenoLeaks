@@ -214,22 +214,14 @@ Rehy_Corr_v4 <- function(input, gap){
     inputdark <- input$lightPeriod[dataindex] 
     dataindex1 <- dataindex[inputdark %in% c(middledark,"darklight")]
     dataindex2 <- dataindex1[-match(j,dataindex1)] # without the point
+    
+    # when 
     dataindex3 <- dataindex2[dataindex2 > j] # and after the point of the difference
-    # dataindex4 <- dataindex2[dataindex2 < j] # and before the point of the difference
-    # if(length(dataindex4)<2){
-    #   # potentially close after light transition
-    #   # take points afterwards:
-    #   dataindex_f <- dataindex2[dataindex2 > j]
-    # }else{
-    #   dataindex_f <- dataindex4
-    # }
-    # out = list(dataindex3,dataindex4)
-    # if timer is on its biggest
-    #if (length(dataindex3) < 3 & timer == 220) {
-    #  dataindex3 <- dataindex2[dataindex2 < j]
-    #  print("j")
-    #}
-    # return(dataindex_f)
+    
+    if (length(dataindex3) == 0){ # when the irrigation is at the day night transition and middledark =! as points afterwards
+      dataindex3 <- dataindex2[dataindex2 < j] # and before the point of the difference
+    }
+    
   }
   
   rehydata <- data.frame(idPot = NULL, 
@@ -240,7 +232,7 @@ Rehy_Corr_v4 <- function(input, gap){
                          decimalDay = NULL)
   
   for (id in unique(input$idPot)){
-    # id = 219
+    # id = 77
     # id = unique(input$idPot)[1]
     selec <- which(input$idPot == id) # select the index numbers (not ID col!). 
     #selec = selec[selec > 161]
@@ -249,7 +241,7 @@ Rehy_Corr_v4 <- function(input, gap){
       
       # for every measurement for this pot...
       # j are index numbers!! not ID numbers
-      # j = 220
+      # j = 6444
       if(!j %in% outlier){ # this is when there is one obvious outlier for which we do not calculate the difference for the next point
         beforeweight = input$weight[j]
         afterweight = input$weight[j + 1]
@@ -259,10 +251,9 @@ Rehy_Corr_v4 <- function(input, gap){
         
         if (abs(diff1) > gap){
           # if difference bigger then gap, can be an outlier or rehydration
-          
           diff2 = abs(beforeweight -  input$weight[j + 2])
           diff3 = abs(beforeweight -  input$weight[j + 3])
-          # 
+          
           if(diff2 > gap & diff3 > gap){
             # if two points similar
             # if difference of before weight with other points afterwards is also bigger, then a rehydration
@@ -286,13 +277,21 @@ Rehy_Corr_v4 <- function(input, gap){
               indat <- input$decimalDay[dataindex2]
               
               ols1 <- lm(inwei ~ indat)
-              predat <- input$decimalDay[j]
+              predat <- input$decimalDay[j+1] # for the date j+1!
               
               outpred <- predict(ols1,data.frame(indat = predat))
               
-              differ <- outpred - beforeweight 
+              differ <- diff(c(outpred,beforeweight))
               
-              if(differ > gap){
+              if(differ > gap){ # when the points afterwards used!
+                rehydata <- rbind(rehydata, data.frame(idPot = id, 
+                                                       weight_before = beforeweight,
+                                                       weight_after = input$weight[j+1],
+                                                       predicted_water_add = differ,
+                                                       from_id = input$ID[j],
+                                                       decimalDay = predat))
+              }else{ # when the points before were used!
+                differ <- diff(c(outpred,afterweight))
                 rehydata <- rbind(rehydata, data.frame(idPot = id, 
                                                        weight_before = beforeweight,
                                                        weight_after = input$weight[j+1],
@@ -317,8 +316,11 @@ Rehy_Corr_v4 <- function(input, gap){
   
   
   #--------------------------------------------#
+  rehydata <- rehydata[rehydata$predicted_water_add>0,]
+  
   # Correction
   input$Weight_corr <- input$weight
+  
   
   for (i in 1:length(rehydata$idPot)){
     # i = 1
