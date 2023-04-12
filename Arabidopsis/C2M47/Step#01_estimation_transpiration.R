@@ -128,10 +128,10 @@ colnames(meteo) <- c("idChamber","date","Air.humidity","Air.temperature","Light"
 
 #------------------------------------------------------------------------------#
 # Genotype data
-genolist <- genolist[,c("idPot","idGenotype","Treatment","Analysis","Sowing")] # select column names (deselect idPot)
+genolist <- genolist[genolist$Analysis == "TR",] # select only transpiration data
+genolist <- genolist[,c("idPot","idGenotype","Treatment","Sowing")] # select column names 
 genolist$Sowing <- as.POSIXct(genolist$Sowing,format= "%d/%m/%Y", tz = "UTC") # transform to posixct before calculation decimalday
 genolist$Sowing_decimalDay <- decimalDay(column=genolist$Sowing) # add decimal day
-inpots <- genolist$idPot[genolist$Analysis == "TR"]
 
 #------------------------------------------------------------------------------#
 # Leaf surface data
@@ -161,14 +161,14 @@ grv <- grv[!is.na(grv$weight),]# delete all NA's
 if(anyDuplicated(grv) > 0){ grv <- grv[!duplicated(grv),] }# remove identical lines
 grv <- grv[which(grv$date > from & grv$date < to),] #select the data from the start and end of gravimetric experiment
 
-# take out days with less than 4 measurements on a single day. Alternive is selecting on "inpots" (future)
+# take out days with less than 4 measurements on a single day. Alternive is selecting on "genolist$idPot" (future)
 grv$idPotManipday <-  paste(grv$idPot, grv$dayofyear, sep="-") # new vector of idPotmanip 
 grv$idPotManipday <- as.factor(grv$idPotManipday)
 numreps <- as.data.frame(table(grv$idPotManipday))
 removepotsday <- unique(numreps[numreps$Freq < 4,]$Var1)
 grv <- grv[!grv$idPotManipday %in% removepotsday,]
 
-grv <- grv[grv$idPot %in% inpots,] # alternative for selecting only pots with more than 4 measurements per day. Better.
+grv <- grv[grv$idPot %in% genolist$idPot,] # alternative for selecting only pots with more than 4 measurements per day. Better.
 
 # adding more information
 grv <- grv[order(grv$idPot,grv$decimalDay),] # order per pot and decimalDay
@@ -217,7 +217,7 @@ pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_plant_growth.pdf", sep =
 
 for (geno in unique(ColorsTrt$idGenotype)){
   # geno = ColorsTrt$idGenotype[1]
-  idpots <- genolist$idPot[genolist$idGenotype == geno & genolist$Analysis == "TR"]
+  idpots <- genolist$idPot[genolist$idGenotype == geno]
   
   input <- surface[surface$idPot %in% idpots,]
   plot(Areamm2~decimalDay,input,type='n',ylab=expression(paste("Rosette surface", " (mm"^2, ")")),ylim=range(surface$Areamm2))
@@ -279,7 +279,7 @@ y = c(grv$weight,df_rehy$Weight_corr)
 xlim = range(x)
 ylim = range(y)
 
-for (i in inpots){
+for (i in genolist$idPot){
   # i = idpots[3]
   input <- df_rehy[df_rehy$idPot == i,]
   xlim = range(input$decimalDay)
@@ -332,10 +332,10 @@ max_dark = 3.5
 min_light = -0.4
 max_light = 4.5
 
-for (i in inpots){
+for (i in genolist$idPot){
   # i = unique(df$idPot)[1]
   # i = "C2M47-217"
-  # i =inpots[1]
+  # i =genolist$idPot[1]
   options(warn = 1)
   hotspots <- Outliers_v4_2(time = df$decimalDay[df$idPot == as.character(i)], # time input
                             weight = df$Weight_corr[df$idPot == as.character(i)], # weight input
@@ -389,7 +389,7 @@ df$outlier[df$side_outlier  | df$obvious_outlier | df$hotspot_outlier] <- T
 stopifnot(nrow(df[df$outlier,])==216) # check with analysis used for publication
 
 pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_gravimetric_outliers.pdf", sep = "_")), width = 10, height = 10)
-for (i in inpots){
+for (i in genolist$idPot){
   
   input <- df[df$idPot == i,]
   plot(Weight_corr~decimalDay,input,type= "n")
