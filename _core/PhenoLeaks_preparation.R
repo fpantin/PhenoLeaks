@@ -320,7 +320,7 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive"){
                          note = NULL)
   
   for (id in unique(input$idPot)){
-    # id = 104
+    # id = "217"
     # id = unique(input$idPot)[1]
     selec <- which(input$idPot == id) # select the index numbers (not ID col!). 
     #selec = selec[selec > 161]
@@ -329,7 +329,7 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive"){
       
       # for every measurement for this pot...
       # j are index numbers!! not ID numbers
-      # j = 4530
+      # j = 220
       if(!j %in% outlier){ # this is when there is one obvious outlier for which we do not calculate the difference for the next point
         beforeweight = input$weight[j]
         afterweight = input$weight[j + 1]
@@ -365,9 +365,9 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive"){
               ols1 <- lm(inwei ~ indat)
               
               if(info == "after"){ # points used after j (classic)
-                predat <- input$decimalDay[j+1] # for the date j
+                predat <- input$decimalDay[j] # for the date j
                 outpred <- predict(ols1,data.frame(indat = predat))
-                differ <- afterweight - outpred # compare prediction with real value for j
+                differ <- outpred - beforeweight # compare prediction with real value for j
               }
               if(info == "before"){# points used before j (when not enough points in same photoperiod)
                 predat <- input$decimalDay[j+1] # for the date j+1
