@@ -126,6 +126,10 @@ swc <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_soilwatercontent.c
 # Meteo data
 meteo$date <- as.POSIXct(strptime(meteo$date,format= "%Y-%m-%d %H:%M:%S", tz = "UTC")) # now the date/hour is not changing
 meteo$decimalDay <- decimalDay(column=meteo$date) # add decimal day
+start_low_vpd <- 83+ 11*(1/24)
+end_low_vpd <- 83+ 13*(1/24)
+start_high_vpd <- 84+ 11*(1/24)
+end_high_vpd <- 84+ 13*(1/24)
 
 #------------------------------------------------------------------------------#
 # Genotype data
@@ -166,6 +170,9 @@ swc <- swc[,c("idPot","nonPerforatedPotWeight","perforatedPotWeight","drySoilWei
 # Gravimetric data
 # preparation  
 grv <- prep_gravi()
+# add vpd periods
+grv$lightPeriod[grv$decimalDay >= start_low_vpd & grv$decimalDay <= end_low_vpd] <- "VPD"
+grv$lightPeriod[grv$decimalDay >= start_high_vpd & grv$decimalDay <= end_high_vpd] <- "VPD"
 
 # just add sowing data to genolist file to add at the end to the transpiration file
 genolist$Measuring_decimalDay <- min(grv$dayofyear)
@@ -557,7 +564,7 @@ for (geno in sort(unique(df$idGenotype)))
     {
     dat <- df[df$idPot == pot, ]
     prepare_kin(dat, use_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
-                main = paste(geno, sub(paste(idExp, "-", sep = ""), "Pot ", pot), sep = " - "),
+                main = paste(geno, " - Pot ", pot), sep = ""),
                 inside = F, irrig_show_mode = "pot", pot = pot,
                 add_SWC = T, mar = c(2.5, 3.5, 2.5, 7.5))
     points(E_mmol_per_m2_s_kPa ~ Time, data = dat, type = "o", cex = 0.5)
@@ -587,7 +594,7 @@ for (geno in sort(unique(df$idGenotype)))
     rm(dat)
     }
   legend("top", ncol = 4, bty = "n",
-         legend = sub(paste(idExp, "-", sep = ""), "Pot ", sort(unique(df.geno$idPot[df.geno$idGenotype == geno]))),
+         legend = paste("Pot ", sort(unique(df.geno$idPot[df.geno$idGenotype == geno]))),
          col = hue_pal()(n.max)[1:color], lty = 1, pch = 21, pt.cex = 0.5)
   rm(df.geno)
   }
