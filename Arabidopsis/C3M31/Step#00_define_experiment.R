@@ -77,10 +77,10 @@ set_constants_C3M31 <- function ()
   idExp <- "C3M31"
 
   # Start of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
-  from <- as.POSIXct("2018-04-11 10:00:00", tz ="UTC")
+  from <- as.POSIXct("2018-02-19 12:00:00", tz ="UTC")
   
   # End of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
-  to <- as.POSIXct("2018-04-18 11:00:00", tz ="UTC")
+  to <- as.POSIXct("2018-02-23 09:00:00", tz ="UTC")
   
   # Duration of the photoperiod (h)
   Pho_Per <- 12
