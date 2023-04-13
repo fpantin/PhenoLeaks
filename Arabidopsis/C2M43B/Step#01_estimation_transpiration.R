@@ -237,7 +237,7 @@ dev.off()
 #------------------------------------------------------------------------------#
 
 #---------------------------STEP 1---------------------------------------------#
-output <- Rehy_Corr_v4(input = grv,gap = 1,jumps="positive")
+output <- Rehy_Corr_v4(input = grv,gap = 1,jumps="positive",method=c("2018-04-11 20:15:00","2018-04-16 08:00:00"))
 df_rehy <- output$output # corrected output
 corr1 <- output$corr1 # 1 run: detected rehydrations
 
