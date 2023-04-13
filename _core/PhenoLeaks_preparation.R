@@ -36,6 +36,10 @@ ylab_tr = expression(paste("E"["rosette"], " (mmol m"^-2, " s"^-1, ")"))
 ylab_tr_vpd = expression(paste("E"["rosette"], " (mmol m"^-2, " s"^-1, " KPa"^-1,")"))
 
 #------------------------------------------------------------------------------#
+# color vector to distinguish between individual pots
+Colors <- c("brown3", "darkblue","darkorange", "cadetblue3", "red","darkolivegreen","chartreuse","darkgrey","chocolate","burlywood","darkkhaki", "darkorchid","deeppink","darkturquoise","darkred","orange")
+
+#------------------------------------------------------------------------------#
 #             Function to prepare gravimetric data                             #
 #------------------------------------------------------------------------------#
 
