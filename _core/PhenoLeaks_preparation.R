@@ -35,9 +35,9 @@ if (startdark + darkperiod < 1){
 ylab_tr = expression(paste("E"["rosette"], " (mmol m"^-2, " s"^-1, ")"))
 ylab_tr_vpd = expression(paste("E"["rosette"], " (mmol m"^-2, " s"^-1, " KPa"^-1,")"))
 
-#------------------------------------------------------------------------------#
-# color vector to distinguish between individual pots
-Colors <- c("brown3", "darkblue","darkorange", "cadetblue3", "red","darkolivegreen","chartreuse","darkgrey","chocolate","burlywood","darkkhaki", "darkorchid","deeppink","darkturquoise","darkred","orange")
+# #------------------------------------------------------------------------------#
+# # color vector to distinguish between individual pots
+# Colors <- c("brown3", "darkblue","darkorange", "cadetblue3", "red","darkolivegreen","chartreuse","darkgrey","chocolate","burlywood","darkkhaki", "darkorchid","deeppink","darkturquoise","darkred","orange")
 
 #------------------------------------------------------------------------------#
 #             Function to prepare gravimetric data                             #
@@ -118,22 +118,22 @@ decimalDay <- function(column){
   return(output)
 }
 
-#------------------------------------------------------------------------------#
-#                       Add rectangle to figures                               #
-#------------------------------------------------------------------------------#
-
-rectangle <- function(x,y){
-  # function to add rectangles to the plot
-  days <- seq(min(unique(as.integer(x))),max(unique(as.integer(x))),1) 
-  days = c(days,(min(days)-1),(max(days)+1))
-  
-  for (d in days){
-    # i = 179
-    rect(xleft= d + startdark, xright=d + startdark + darkperiod, ybottom= min(y,na.rm = T)-min(y,na.rm = T), ytop= max(y,na.rm = T)*2, density= NULL, col= color[1], border = NA)
-    
-  }
-  
-}
+# #------------------------------------------------------------------------------#
+# #                       Add rectangle to figures                               #
+# #------------------------------------------------------------------------------#
+# 
+# rectangle <- function(x,y){
+#   # function to add rectangles to the plot
+#   days <- seq(min(unique(as.integer(x))),max(unique(as.integer(x))),1) 
+#   days = c(days,(min(days)-1),(max(days)+1))
+#   
+#   for (d in days){
+#     # i = 179
+#     rect(xleft= d + startdark, xright=d + startdark + darkperiod, ybottom= min(y,na.rm = T)-min(y,na.rm = T), ytop= max(y,na.rm = T)*2, density= NULL, col= color[1], border = NA)
+#     
+#   }
+#   
+# }
 
 #------------------------------------------------------------------------------#
 #             Function to test whether a vector with decimalDays               #  
