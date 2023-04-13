@@ -518,7 +518,7 @@ transpi$SWC <- 0
 for (i in 1:nrow(transpi)){
   # i = 2
   id = transpi$idPot[i]
-  transpi$SWC[i] <- mean(df$SWC[df$idPot == id & df$decimalDay > transpi$min_decimalDay[i] & df$decimalDay < transpi$max_decimalDay[i]]) 
+  transpi$SWC[i] <- mean(df$SWC[df$idPot == id & df$decimalDay >= transpi$min_decimalDay[i] & df$decimalDay <= transpi$max_decimalDay[i]]) 
 }
 # head(transpi)
 

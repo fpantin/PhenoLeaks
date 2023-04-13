@@ -318,30 +318,30 @@ for (i in unique(df$idPot)){
   df$obvious_outlier[df$idPot == i & df$ID %in% c(out_obvious) ] <- T # already take this information for the hotspot analysis
   df$outlier[df$side_outlier | df$obvious_outlier] <- T
   
-  for (j in hotspots){
-    # check which points are real outliers at this timepoint
-    # outliers detection based on input on the fit. Per hotspot only 1 point can be detected
-    
-    # j = hotspots[8]
-    # j = 47
-    
-    new_outliers <- Outliers_v5(time = df$decimalDay[df$idPot == as.character(i)], # time input
-                                weight = df$Weight_corr[df$idPot == as.character(i)], # weight input
-                                hotspot = j, # ID of the hotspot
-                                lightPeriod = df$lightPeriod[df$idPot == as.character(i)],
-                                outlier = df$outlier[df$idPot == as.character(i)],
-                                startdark = startdark,
-                                period = darkperiod,
-                                daynight = "yes",
-                                min_around = 90)
-    # df$outlier[df$idPotManip == i & df$ID %in% c(new_outliers) ] <- T
-    outliers <- c(outliers,new_outliers)
-  }
+  # for (j in hotspots){
+  #   # check which points are real outliers at this timepoint
+  #   # outliers detection based on input on the fit. Per hotspot only 1 point can be detected
+  #   
+  #   # j = hotspots[8]
+  #   # j = 47
+  #   
+  #   new_outliers <- Outliers_v5(time = df$decimalDay[df$idPot == as.character(i)], # time input
+  #                               weight = df$Weight_corr[df$idPot == as.character(i)], # weight input
+  #                               hotspot = j, # ID of the hotspot
+  #                               lightPeriod = df$lightPeriod[df$idPot == as.character(i)],
+  #                               outlier = df$outlier[df$idPot == as.character(i)],
+  #                               startdark = startdark,
+  #                               period = darkperiod,
+  #                               daynight = "yes",
+  #                               min_around = 90)
+  #   # df$outlier[df$idPotManip == i & df$ID %in% c(new_outliers) ] <- T
+  #   outliers <- c(outliers,new_outliers)
+  # }
+  # 
+  # # outliers <- c(outliers,out_sides)
+  # # outliers <- c(outliers)
   
-  # outliers <- c(outliers,out_sides)
-  # outliers <- c(outliers)
-  
-  df$hotspot_outlier[df$idPot == i & df$ID %in% outliers ] <- T
+  df$hotspot_outlier[df$idPot == i] <- F
   
 }
 
@@ -387,7 +387,7 @@ dfE_v7 <- Transpi_calc_v7(input = input, freq = 30, min_around = 90, lightsOFF =
 # add surface
 dfE_v7$surface = NA # need to check in the future: 217 start is NA for the surface.. 
 for (i in 1:nrow(dfE_v7)){
-  dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay> dfE_v7$min_decimalDay[i] & grv$decimalDay< dfE_v7$max_decimalDay[i]])
+  dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay>= dfE_v7$min_decimalDay[i] & grv$decimalDay<= dfE_v7$max_decimalDay[i]])
 }
 
 dfE_v7$E_mmol_per_m2_s  = dfE_v7$E / (dfE_v7$surface * 10^-6)

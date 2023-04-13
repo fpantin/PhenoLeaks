@@ -380,7 +380,7 @@ dfE_v7 <- Transpi_calc_v7(input = input, freq = 30, min_around = 90, lightsOFF =
 # add surface
 dfE_v7$surface = NA # need to check in the future: 217 start is NA for the surface.. 
 for (i in 1:nrow(dfE_v7)){
-  dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay> dfE_v7$min_decimalDay[i] & grv$decimalDay< dfE_v7$max_decimalDay[i]])
+  dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay>= dfE_v7$min_decimalDay[i] & grv$decimalDay<= dfE_v7$max_decimalDay[i]])
 }
 
 dfE_v7$E_mmol_per_m2_s  = dfE_v7$E / (dfE_v7$surface * 10^-6)
