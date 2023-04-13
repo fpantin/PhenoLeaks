@@ -126,10 +126,7 @@ swc <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_soilwatercontent.c
 # Meteo data
 meteo$date <- as.POSIXct(strptime(meteo$date,format= "%Y-%m-%d %H:%M:%S", tz = "UTC")) # now the date/hour is not changing
 meteo$decimalDay <- decimalDay(column=meteo$date) # add decimal day
-start_low_vpd <- 83+ 11*(1/24)
-end_low_vpd <- 83+ 13*(1/24)
-start_high_vpd <- 84+ 11*(1/24)
-end_high_vpd <- 84+ 13*(1/24)
+vpd_periods <- c(83+ 11*(1/24),83+ 13*(1/24),84+ 11*(1/24),84+ 13*(1/24)) # start-end, start-end
 
 #------------------------------------------------------------------------------#
 # Genotype data
@@ -171,8 +168,8 @@ swc <- swc[,c("idPot","nonPerforatedPotWeight","perforatedPotWeight","drySoilWei
 # preparation  
 grv <- prep_gravi()
 # add vpd periods
-grv$lightPeriod[grv$decimalDay >= start_low_vpd & grv$decimalDay <= end_low_vpd] <- "VPD"
-grv$lightPeriod[grv$decimalDay >= start_high_vpd & grv$decimalDay <= end_high_vpd] <- "VPD"
+grv$lightPeriod[grv$decimalDay >= vpd_periods[1] & grv$decimalDay <= vpd_periods[2]] <- "VPD"
+grv$lightPeriod[grv$decimalDay >= vpd_periods[3] & grv$decimalDay <= vpd_periods[4]] <- "VPD"
 
 # just add sowing data to genolist file to add at the end to the transpiration file
 genolist$Measuring_decimalDay <- min(grv$dayofyear)
@@ -374,35 +371,14 @@ for (i in genolist$idPot){
   df$obvious_outlier[df$idPot == i & df$ID %in% c(out_obvious) ] <- T # already take this information for the hotspot analysis
   df$outlier[df$side_outlier | df$obvious_outlier] <- T
   
-  for (j in hotspots){
-    # check which points are real outliers at this timepoint
-    # outliers detection based on input on the fit. Per hotspot only 1 point can be detected
-    
-    # j = hotspots[8]
-    # j = 47
-    
-    new_outliers <- Outliers_v5(time = df$decimalDay[df$idPot == as.character(i)], # time input
-                                weight = df$Weight_corr[df$idPot == as.character(i)], # weight input
-                                hotspot = j, # ID of the hotspot
-                                lightPeriod = df$lightPeriod[df$idPot == as.character(i)],
-                                outlier = df$outlier[df$idPot == as.character(i)],
-                                startdark = startdark,
-                                period = darkperiod,
-                                daynight = "yes",
-                                min_around = 90)
-    # df$outlier[df$idPotManip == i & df$ID %in% c(new_outliers) ] <- T
-    outliers <- c(outliers,new_outliers)
-  }
-  
-  # outliers <- c(outliers,out_sides)
-  # outliers <- c(outliers)
-  
-  df$hotspot_outlier[df$idPot == i & df$ID %in% outliers ] <- T
+ 
+   df$hotspot_outlier <- F
   
 }
 
 
-df$outlier[df$side_outlier  | df$obvious_outlier | df$hotspot_outlier] <- T
+df$outlier[df$side_outlier  | df$obvious_outlier  | df$hotspot_outlier] <- T
+nrow(df[df$outlier==T,])
 
 ## AJW old version
 # pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01c_correct_gravimetric_outliers.pdf", sep = "_")), width = 10, height = 10)
@@ -473,7 +449,8 @@ dfE_v7 <- Transpi_calc_v7(input = input, freq = 30, min_around = 90, lightsOFF =
 # add surface
 dfE_v7$surface = NA # need to check in the future: 217 start is NA for the surface.. 
 for (i in 1:nrow(dfE_v7)){
-  dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay> dfE_v7$min_decimalDay[i] & grv$decimalDay< dfE_v7$max_decimalDay[i]])
+  # i = 133
+  dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay >= dfE_v7$min_decimalDay[i] & grv$decimalDay <= dfE_v7$max_decimalDay[i]])
 }
 
 dfE_v7$E_mmol_per_m2_s  = dfE_v7$E / (dfE_v7$surface * 10^-6)
