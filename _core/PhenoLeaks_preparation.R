@@ -338,7 +338,8 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive",method = "automatic"){
     allpoints <- which(input$idPot == id) # select the index numbers (not ID col!). 
     
     if(method[1] == "automatic"){
-      selec <- selec[-length(selec)] # take out last one if automatic
+      
+      selec <- allpoints[-length(allpoints)] # take out last one if automatic
     }
     
     if(!method[1] == "automatic"){
