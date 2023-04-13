@@ -126,6 +126,10 @@ swc <- read.csv(file.path(dir_Exp, "Raw_data", paste0(idExp,"_soilwatercontent.c
 # Meteo data
 meteo$date <- as.POSIXct(strptime(meteo$date,format= "%Y-%m-%d %H:%M:%S", tz = "UTC")) # now the date/hour is not changing
 meteo$decimalDay <- decimalDay(column=meteo$date) # add decimal day
+start_low_vpd <- 83+ 11*(1/24)
+end_low_vpd <- 83+ 13*(1/24)
+start_high_vpd <- 84+ 11*(1/24)
+end_high_vpd <- 84+ 13*(1/24)
 
 #------------------------------------------------------------------------------#
 # Genotype data
@@ -166,6 +170,9 @@ swc <- swc[,c("idPot","nonPerforatedPotWeight","perforatedPotWeight","drySoilWei
 # Gravimetric data
 # preparation  
 grv <- prep_gravi()
+# add vpd periods
+grv$lightPeriod[grv$decimalDay >= start_low_vpd & grv$decimalDay <= end_low_vpd] <- "VPD"
+grv$lightPeriod[grv$decimalDay >= start_high_vpd & grv$decimalDay <= end_high_vpd] <- "VPD"
 
 # just add sowing data to genolist file to add at the end to the transpiration file
 genolist$Measuring_decimalDay <- min(grv$dayofyear)
