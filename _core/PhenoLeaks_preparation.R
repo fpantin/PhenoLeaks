@@ -262,11 +262,15 @@ surface_add <- function(input){
 #             Function to detect and correct for irrigations                   #
 #------------------------------------------------------------------------------#
 
-Rehy_Corr_v4 <- function(input,gap,jumps="positive"){
+Rehy_Corr_v4 <- function(input,gap,jumps="positive",method = "automatic"){
   # if jumps is positive, correct only for irrigation (so not other jumps with negative values)
   # if jumps is both, takes into account negative and positive "irrigations"
   
-  #--------------------------------------------#
+  # method = "automatic" : automatic detection with the script based on gap. 
+  # method = c() : insert the end dates of the cycle preceding the (manual) irrigation. 
+  # works only when the irrigations happened at the same time for all pots!!!! Not the case for C2M47 for example
+  
+    #--------------------------------------------#
   # Detection
   selecpoint <- function(timer){
     
@@ -275,7 +279,7 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive"){
     beforedater <- middledater - 1*60* timer # add .. hour back in time
     afterdater <- middledater + 1*60* timer # add .. hour
     # select index values 
-    dataindex <- selec[input$date[selec] >= beforedater & input$date[selec] <= afterdater]
+    dataindex <- allpoints[input$date[allpoints] >= beforedater & input$date[allpoints] <= afterdater]
     
     middledark = as.character(input$lightPeriod[j]) # get the lightperiod 
     # reselect the index base on light/dark (comparison only made with similar light/dark based on frequency)
@@ -293,7 +297,7 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive"){
     if (length(dataindex2) < 2){ # when the irrigation is at the day night transition and middledark =! as points afterwards
       beforedater <- middledater - 1*60* timer*2 # add .. hour back in time
       afterdater <- middledater + 1*60* timer*2 # add .. hour
-      dataindex <- selec[input$date[selec] >= beforedater & input$date[selec] <= afterdater]
+      dataindex <- allpoints[input$date[allpoints] >= beforedater & input$date[allpoints] <= afterdater]
       middledark = as.character(input$lightPeriod[j]) # get the lightperiod 
       # reselect the index base on light/dark (comparison only made with similar light/dark based on frequency)
       inputdark <- input$lightPeriod[dataindex] 
@@ -308,13 +312,18 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive"){
     if (length(dataindex2) < 2){ # still smaller, means that in the same photoperiod no points
       beforedater <- middledater - 1*60* timer # add .. hour back in time
       afterdater <- middledater + 1*60* timer # add .. hour
-      dataindex <- selec[input$date[selec] >= beforedater & input$date[selec] <= afterdater]
+      dataindex <- allpoints[input$date[allpoints] >= beforedater & input$date[allpoints] <= afterdater]
       dataindex2 <- dataindex[dataindex < j] # and before the point of the difference, NOT the point itself to avoid outlier sensibility
       info <- "before"
       }
     return(c(dataindex2,info))
   }
   
+  if(!method[1] == "automatic"){
+    # when we have irrigation dates
+    method_dd <- decimalDay(method) # transform to decimaldays
+  }
+    
   rehydata <- data.frame(idPot = NULL, 
                          weight_before = NULL,
                          weight_after = NULL,
@@ -326,14 +335,30 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive"){
   for (id in unique(input$idPot)){
     # id = "217"
     # id = unique(input$idPot)[1]
-    selec <- which(input$idPot == id) # select the index numbers (not ID col!). 
+    allpoints <- which(input$idPot == id) # select the index numbers (not ID col!). 
+    
+    if(method[1] == "automatic"){
+      selec <- selec[-length(selec)] # take out last one if automatic
+    }
+    
+    if(!method[1] == "automatic"){
+      # when we have irrigations dates
+      
+      selec <- c()
+      for (i in 1:length(method)){
+        # for every irrigation, select the closest point before the irrigation.
+        # i = 1
+        selec <- c(selec,which(input$idPot == id & input$decimalDay < method_dd[i])[length(which(input$idPot == id & input$decimalDay < method_dd[i]))]) # select the index numbers (not ID col!). 
+      }
+    }
+    
     #selec = selec[selec > 161]
     outlier <- c()
-    for (j in selec[-length(selec)]){
+    for (j in selec){
       
       # for every measurement for this pot...
       # j are index numbers!! not ID numbers
-      # j = 220
+      # j = 22
       if(!j %in% outlier){ # this is when there is one obvious outlier for which we do not calculate the difference for the next point
         beforeweight = input$weight[j]
         afterweight = input$weight[j + 1]
@@ -357,6 +382,7 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive"){
             # next point is good point 
             out <- selecpoint(timer = 160) #
             if(length(out)>1){
+              # when points are found
               dataindex2 <- as.numeric(out[1:(length(out)-1)])
               info <- out[length(out)]
             }else{dataindex2 <- integer()}
