@@ -564,7 +564,7 @@ for (geno in sort(unique(df$idGenotype)))
     {
     dat <- df[df$idPot == pot, ]
     prepare_kin(dat, use_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
-                main = paste(geno, " - Pot ", pot), sep = ""),
+                main = paste(geno, " - Pot ", pot, sep = ""),
                 inside = F, irrig_show_mode = "pot", pot = pot,
                 add_SWC = T, mar = c(2.5, 3.5, 2.5, 7.5))
     points(E_mmol_per_m2_s_kPa ~ Time, data = dat, type = "o", cex = 0.5)
