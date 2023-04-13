@@ -429,7 +429,7 @@ for (geno in sort(unique(ColorsTrt$idGenotype)))
            col = c("red", "orange", "violet"), pch = 16, cex = 0.5,
            title = "Outliers", bty = "n")
 
-        rm(input)
+    rm(input)
     }
   }
 dev.off()
@@ -562,7 +562,7 @@ for (geno in sort(unique(df$idGenotype)))
               main = geno,
               inside = F, irrig_show_mode = "mean")
   color = 0
-  for (pot in sort(unique(df.geno$idPot[df.geno$idGenotype == geno])))
+  for (pot in sort(unique(df.geno$idPot)))
     {
     #require(scales)
     color <- color + 1
