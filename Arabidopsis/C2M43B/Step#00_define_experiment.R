@@ -80,7 +80,8 @@ set_constants_C2M43B <- function ()
   from <- as.POSIXct("2018-04-11 10:00:00", tz ="UTC")
   
   # End of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
-  to <- as.POSIXct("2018-04-18 11:00:00", tz ="UTC")
+  # to <- as.POSIXct("2018-04-18 11:00:00", tz ="UTC") # the real end of the experiment
+  to <- as.POSIXct("2018-04-17 15:10:00", tz ="UTC") # the anticipated end before VPD problem
   
   # Duration of the photoperiod (h)
   Pho_Per <- 12
