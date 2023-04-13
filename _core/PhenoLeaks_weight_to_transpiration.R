@@ -72,6 +72,21 @@ Transpi_calc_v7 <-  function(input, freq = 30, min_around = 120,nightperiod = 24
       }
     }
     
+    # but test here whether in VPD period on decimalDay
+    if("VPD"%in% unique(input$lightPeriod)){
+      # means that there are VPD periods
+      
+      # test for every vpd period
+      for (i in seq(1,length(vpd_periods)-1,2)){
+        if (dd > vpd_periods[i] & dd< vpd_periods[i+1]){
+          # test if within a vpd period
+          lightp <- "VPD"
+        }
+      }
+      
+      
+    }
+    
     
     return(lightp)
     
