@@ -40,7 +40,7 @@ rm(list=ls()) # empty environment (if not potential error )
 
 #options(repos = "https://cran.rstudio.com/") # RStudio
 # package splitstackshape contains a function Csplit to split columns based on a seperator.
-for (pkg in c("splitstackshape", "here"))
+for (pkg in c("splitstackshape", "here", "scales"))
   {
   if (!pkg %in% installed.packages()[, "Package"]) { install.packages(pkg) }
   #update.packages(pkg)
@@ -83,6 +83,9 @@ dir_PhenoLeaks <- here::here("_core")
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_generic.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_preparation.R"))
 source(file.path(dir_PhenoLeaks, "PhenoLeaks_weight_to_transpiration.R"))
+source(file.path(dir_PhenoLeaks, "PhenoLeaks_graphics.R"))
+
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                                                              #
@@ -173,44 +176,88 @@ genolist$Days_Sowing_to_measuring <- genolist$Measuring_decimalDay - genolist$So
 #------------------------------------------------------------------------------#
 
 # check plant growth data for outliers and fit
-if (!dir.exists(file.path(dir_Exp, "Figures"))) { dir.create(file.path(dir_Exp, "Figures")) }
-pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_plant_growth.pdf", sep = "_")), width = 10, height = 10)
 
-for (geno in unique(ColorsTrt$idGenotype)){
-  # geno = ColorsTrt$idGenotype[1]
+if (!dir.exists(file.path(dir_Exp, "Figures"))) { dir.create(file.path(dir_Exp, "Figures")) }
+
+## AJW old version
+# pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01a_plant_growth.pdf", sep = "_")), width = 10, height = 10)
+# for (geno in sort(unique(ColorsTrt$idGenotype))){
+#   # geno = ColorsTrt$idGenotype[1]
+#   idpots <- genolist$idPot[genolist$idGenotype == geno]
+#   
+#   input <- surface[surface$idPot %in% idpots,]
+#   plot(Areamm2~decimalDay,input,type='n',ylab=expression(paste("Rosette surface", " (mm"^2, ")")),ylim=range(surface$Areamm2))
+#   title(paste0(geno,", filled = outlier"))
+#   rectangle(x = input$decimalDay,y = c(surface$Areamm2))
+#   
+#   for (pot in idpots){
+#     # pot = idpots[2]
+#     points(Areamm2~decimalDay,input[input$idPot == pot,],type="p",col = Colors[match(pot,idpots)])
+#     points(Areamm2~decimalDay,input[input$idPot == pot & input$outlier,],type="p",col=Colors[match(pot,idpots)],pch=16)
+#     
+#     if(pot %in% unique(surf_coef$idPot)){
+#       
+#       mod <- surf_coef$model[surf_coef$idPot == pot & surf_coef$growth == "continu"]
+#       slope = surf_coef$slope[surf_coef$idPot == pot & surf_coef$growth == "continu"]
+#       intercept = surf_coef$intercept[surf_coef$idPot == pot & surf_coef$growth == "continu"]
+#       
+#       if (mod == "lm"){
+#         curve(intercept+slope*x ,from = min(surface$decimalDay), to = max(surface$decimalDay),add = T,col = Colors[match(pot,idpots)])
+#       }
+#       if (mod == "log"){
+#         curve(exp(intercept+slope*x), from = min(surface$decimalDay), to = max(surface$decimalDay),add = T,col = Colors[match(pot,idpots)])
+#       }
+#       
+#     }
+#   }
+#   legend("topleft",legend = idpots, fill=Colors[1:length(idpots)])
+# }
+# dev.off()
+
+## New version
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01a_plant_growth_per_condition.pdf", sep = "_")), width = 10, height = 5)
+n.max <- max(aggregate(genolist$idPot[!duplicated(genolist$idPot)], by = list(genolist$idGenotype[!duplicated(genolist$idPot)]), FUN = length)$x) # maximum number of replicates per treatment
+for (geno in sort(unique(ColorsTrt$idGenotype)))
+  {
   idpots <- genolist$idPot[genolist$idGenotype == geno]
-  
-  input <- surface[surface$idPot %in% idpots,]
-  plot(Areamm2~decimalDay,input,type='n',ylab=expression(paste("Rosette surface", " (mm"^2, ")")),ylim=range(surface$Areamm2))
-  title(paste0(geno,", filled = outlier"))
-  rectangle(x = input$decimalDay,y = c(surface$Areamm2))
-  
-  for (pot in idpots){
-    # pot = idpots[2]
-    points(Areamm2~decimalDay,input[input$idPot == pot,],type="p",col = Colors[match(pot,idpots)])
-    points(Areamm2~decimalDay,input[input$idPot == pot & input$outlier,],type="p",col=Colors[match(pot,idpots)],pch=16)
+  input <- surface[surface$idPot %in% idpots, ]
+  prepare_kin(input, Time_var = "decimalDay", E_var = "Areamm2",
+              ylab = expression(paste("Rosette area", " (mm"^2, ")")), 
+              main = paste(geno, " - filled = outlier", sep = ""),
+              inside = F, irrig_show_mode = "none")
+  color = 0
+  for (pot in sort(idpots))
+    {
+    #require(scales)
+    color <- color + 1
+    points(Areamm2 ~ decimalDay, input[input$idPot == pot, ], type = "p", col = hue_pal()(n.max)[color], cex = 0.5)
+    points(Areamm2 ~ decimalDay, input[input$idPot == pot & input$outlier,], type = "p", col = hue_pal()(n.max)[color], cex = 0.5, pch=16)
     
-    if(pot %in% unique(surf_coef$idPot)){
-      
+    if (pot %in% unique(surf_coef$idPot))
+      {
       mod <- surf_coef$model[surf_coef$idPot == pot & surf_coef$growth == "continu"]
       slope = surf_coef$slope[surf_coef$idPot == pot & surf_coef$growth == "continu"]
       intercept = surf_coef$intercept[surf_coef$idPot == pot & surf_coef$growth == "continu"]
       
-      if (mod == "lm"){
-        curve(intercept+slope*x ,from = min(surface$decimalDay), to = max(surface$decimalDay),add = T,col = Colors[match(pot,idpots)])
+      if (mod == "lm")
+        {
+        curve(intercept+slope*x, from = min(surface$decimalDay), to = max(surface$decimalDay), add = T, col = hue_pal()(n.max)[color])
+        }
+      if (mod == "log")
+        {
+        curve(exp(intercept+slope*x), from = min(surface$decimalDay), to = max(surface$decimalDay), add = T, col = hue_pal()(n.max)[color])
+        }
       }
-      if (mod == "log"){
-        curve(exp(intercept+slope*x), from = min(surface$decimalDay), to = max(surface$decimalDay),add = T,col = Colors[match(pot,idpots)])
-      }
-      
     }
+  legend("top", ncol = 4, bty = "n",
+         legend = paste("Pot ", sort(idpots), sep = ""),
+         col = hue_pal()(n.max)[1:color], lty = 1, pch = 21, pt.cex = 0.5)
+  rm(input)
   }
-  legend("topleft",legend = idpots, fill=Colors[1:length(idpots)])
-  
-  
-  
-}
+
 dev.off()
+
+
 
 #------------------------------------------------------------------------------#
 #                               Cleaning                                       #
@@ -221,30 +268,56 @@ output <- Rehy_Corr_v4(input = grv,gap = 1)
 df_rehy <- output$output # corrected output
 corr1 <- output$corr1 # 1 run: detected rehydrations
 
-pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_irrigation.pdf", sep = "_")), width = 10, height = 10)
 x = c(grv$decimalDay,df_rehy$decimalDay)
 y = c(grv$weight,df_rehy$Weight_corr)
 xlim = range(x)
 ylim = range(y)
 
-for (i in genolist$idPot){
-  # i = idpots[3]
-  input <- df_rehy[df_rehy$idPot == i,]
-  xlim = range(input$decimalDay)
-  ylim = range(input$weight,input$Weight_corr)
-  plot(weight~decimalDay,input[input$idPot == i,],type='n',ylim = ylim, xlim=xlim, ylab="weight (g)",xlab="decimalDay",main=i)
-  rectangle(x,y)
-  points(weight~decimalDay,input[input$idPot == i,],type="p")
-  
-  if(i %in% unique(corr1$idPot)){
-    # for each unique was an irrigation
-    strt =  corr1$from_id[corr1$idPot == i][1] # take the first one!
-    
-    points(Weight_corr~decimalDay,df_rehy[df_rehy$idPot == i & df_rehy$ID > strt,],col="red")
-    
+## AJW old version
+# pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01b_correct_irrigation.pdf", sep = "_")), width = 10, height = 10)
+# for (i in genolist$idPot){
+#   # i = idpots[3]
+#   input <- df_rehy[df_rehy$idPot == i,]
+#   xlim = range(input$decimalDay)
+#   ylim = range(input$weight,input$Weight_corr)
+#   plot(weight~decimalDay,input[input$idPot == i,],type='n',ylim = ylim, xlim=xlim, ylab="weight (g)",xlab="decimalDay",main=i)
+#   rectangle(x,y)
+#   points(weight~decimalDay,input[input$idPot == i,],type="p")
+#   if(i %in% unique(corr1$idPot)){
+#     # for each unique was an irrigation
+#     strt =  corr1$from_id[corr1$idPot == i][1] # take the first one!
+#     points(Weight_corr~decimalDay,df_rehy[df_rehy$idPot == i & df_rehy$ID > strt,],col="red")
+#   }
+#   legend("bottomleft",legend = c("corrected data"),fill="red")
+# }
+# dev.off()
+
+## New version
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01b_correct_irrigation.pdf", sep = "_")), width = 10, height = 5)
+for (geno in sort(unique(ColorsTrt$idGenotype)))
+  {
+  idpots <- genolist$idPot[genolist$idGenotype == geno]
+  for (pot in sort(idpots))
+    {
+    input <- df_rehy[df_rehy$idPot == pot, ]
+    xlim <- range(input$decimalDay)
+    ylim <- range(input$weight, input$Weight_corr)
+    prepare_kin(input, Time_var = "decimalDay", E_var = "weight",
+                ylab = "Pot weight (g)", ylim = ylim, xlim = xlim,
+                main = paste(geno, " - Pot ", pot, sep = ""),
+                inside = F, irrig_show_mode = "none")
+    points(weight ~ decimalDay, data = input, type = "p", cex = 0.5)
+    if (pot %in% unique(corr1$idPot))
+      {
+      # for each unique was an irrigation
+      strt <- corr1$from_id[corr1$idPot == pot][1] # take the first one!
+      points(Weight_corr ~ decimalDay, df_rehy[df_rehy$idPot == pot & df_rehy$ID > strt,], cex = 0.5, col = "red")
+      }
+    legend("topright", legend = "corrected data", pch = 1, cex = 0.5, col = "red",
+           bty = "n")
+    rm(input)
+    }
   }
-  legend("bottomleft",legend = c("corrected data"),fill="red")
-}
 dev.off()
 
 df = df_rehy
@@ -324,30 +397,60 @@ for (i in genolist$idPot){
 
 df$outlier[df$side_outlier  | df$obvious_outlier | df$hotspot_outlier] <- T
 
-pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_gravimetric_outliers.pdf", sep = "_")), width = 10, height = 10)
-for (i in genolist$idPot){
-  
-  input <- df[df$idPot == i,]
-  plot(Weight_corr~decimalDay,input,type= "n")
-  points(Weight_corr~decimalDay,input[!input$outlier,])
-  x = input$decimalDay
-  y = input$Weight_corr
-  rectangle(x,y)
-  title(paste0("idPot : ",i))
-  
-  # outliers
-  points(Weight_corr~decimalDay,input[input$side_outlier,],col= "red",pch = 16)
-  points(Weight_corr~decimalDay,input[input$obvious_outlier,],col= "orange",pch = 16)
-  points(Weight_corr~decimalDay,input[input$hotspot_outlier,],col= "violet",pch = 16)
-  
-  legend("topright",legend = c("side","obvious","hotspot"),fill = c("red","orange","violet"),title = "outliers")
-  legend("bottomleft",legend = c("irrigation"),fill = c("black"))
-  
-  if(i %in% unique(corr1$idPot)){
-    abline(v = corr1$decimalDay[corr1$idPot == i])
+## AJW old version
+# pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01c_correct_gravimetric_outliers.pdf", sep = "_")), width = 10, height = 10)
+# for (i in genolist$idPot){
+#   
+#   input <- df[df$idPot == i,]
+#   plot(Weight_corr~decimalDay,input,type= "n")
+#   points(Weight_corr~decimalDay,input[!input$outlier,])
+#   x = input$decimalDay
+#   y = input$Weight_corr
+#   rectangle(x,y)
+#   title(paste0("idPot : ",i))
+#   
+#   # outliers
+#   points(Weight_corr~decimalDay,input[input$side_outlier,],col= "red",pch = 16)
+#   points(Weight_corr~decimalDay,input[input$obvious_outlier,],col= "orange",pch = 16)
+#   points(Weight_corr~decimalDay,input[input$hotspot_outlier,],col= "violet",pch = 16)
+#   
+#   legend("topright",legend = c("side","obvious","hotspot"),fill = c("red","orange","violet"),title = "outliers")
+#   legend("bottomleft",legend = c("irrigation"),fill = c("black"))
+#   
+#   if(i %in% unique(corr1$idPot)){
+#     abline(v = corr1$decimalDay[corr1$idPot == i])
+#   }
+# }
+# dev.off()
+
+## New version
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01c_correct_gravimetric_outliers.pdf", sep = "_")), width = 10, height = 5)
+for (geno in sort(unique(ColorsTrt$idGenotype)))
+  {
+  idpots <- genolist$idPot[genolist$idGenotype == geno]
+  for (pot in sort(idpots))
+    {
+    input <- df[df$idPot == pot, ]
+    prepare_kin(input, Time_var = "decimalDay", E_var = "Weight_corr",
+                ylab = "Corrected pot weight (g)",
+                main = paste(geno, " - Pot ", pot, sep = ""),
+                inside = F, irrig_show_mode = "pot", pot = pot)
+    points(Weight_corr ~ decimalDay, data = input[!input$outlier,], type = "p", cex = 0.5)
+    
+    # outliers
+    points(Weight_corr ~ decimalDay, input[input$side_outlier, ], col = "red", pch = 16, cex = 0.5)
+    points(Weight_corr ~ decimalDay, input[input$obvious_outlier, ], col = "orange", pch = 16, cex = 0.5)
+    points(Weight_corr ~ decimalDay, input[input$hotspot_outlier, ], col = "violet", pch = 16, cex = 0.5)
+    
+    legend("topright", legend = c("side", "obvious", "hotspot"), 
+           col = c("red", "orange", "violet"), pch = 16, cex = 0.5,
+           title = "Outliers", bty = "n")
+
+        rm(input)
+    }
   }
-}
 dev.off()
+
 
 
 #------------------------------------------------------------------------------#
@@ -386,27 +489,28 @@ for (i in 1:nrow(transpi)){
 transpi <- transpi[order(transpi$idPot, transpi$decimalDay), ]
 transpi$E_mmol_per_m2_s_kPa  <- transpi$E_mmol_per_m2_s  / transpi$meanVPD
 
+## AJW old version
 # graphs
-pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_transpiration.pdf", sep = "_")), width = 10, height = 10)
-x = transpi$decimalDay
-y = transpi$E_mmol_per_m2_s
-
-for (i in unique(transpi$idGenotype)){
-  # i = unique(genolist$idGenotype)[1]
-  input <- transpi[transpi$idGenotype == i,]
-  plot(E_mmol_per_m2_s~decimalDay,input,type='n',ylab=ylab_tr,ylim=c(0,4),xlim=range(x,na.rm = T))
-  title(i)
-  rectangle(x,y)
-  
-  for (id in unique(input$idPot)){
-    points(E_mmol_per_m2_s~decimalDay,input[input$idPot == id,],type="l",col=Colors[match(id,unique(input$idPot))])
-    points(E_mmol_per_m2_s~decimalDay,input[input$idPot == id,],type="p",col=Colors[match(id,unique(input$idPot))],cex=0.25)
-    
-  }
-  
-  legend("topright",legend = unique(input$idPot),fill=Colors)
-}
-dev.off()
+# pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01d_transpiration.pdf", sep = "_")), width = 10, height = 10)
+# x = transpi$decimalDay
+# y = transpi$E_mmol_per_m2_s
+# 
+# for (i in unique(transpi$idGenotype)){
+#   # i = unique(genolist$idGenotype)[1]
+#   input <- transpi[transpi$idGenotype == i,]
+#   plot(E_mmol_per_m2_s~decimalDay,input,type='n',ylab=ylab_tr,ylim=c(0,4),xlim=range(x,na.rm = T))
+#   title(i)
+#   rectangle(x,y)
+#   
+#   for (id in unique(input$idPot)){
+#     points(E_mmol_per_m2_s~decimalDay,input[input$idPot == id,],type="l",col=Colors[match(id,unique(input$idPot))])
+#     points(E_mmol_per_m2_s~decimalDay,input[input$idPot == id,],type="p",col=Colors[match(id,unique(input$idPot))],cex=0.25)
+#     
+#   }
+#   
+#   legend("topright",legend = unique(input$idPot),fill=Colors)
+# }
+# dev.off()
 
 #------------------------------------------------------------------------------#
 #                               Soil Water Content SWC                         #
@@ -434,10 +538,68 @@ for (i in 1:nrow(transpi)){
 }
 # head(transpi)
 
-# save output transpiration
 colnames(transpi)[match("Treatment",colnames(transpi))] <- "idWatering" 
+
+
+
+#------------------------------------------------------------------------------#
+#                          Format time, plot and save                          #
+#------------------------------------------------------------------------------#
+
+# Format the dataframe with a uniform time sequence for all pots that starts at 0 at Time_ON0
+df <- format_time(transpi, Time_var = "decimalDay", Trt_var = c("idGenotype"), time_step = 30)
+
+## New version of the graphs (with soil water content and VPD)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01d_transpiration_all_pots.pdf", sep = "_")), width = 10, height = 5)
+for (geno in sort(unique(df$idGenotype)))
+  {
+  for (pot in sort(unique(df$idPot[df$idGenotype == geno])))
+    {
+    dat <- df[df$idPot == pot, ]
+    prepare_kin(dat, use_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
+                main = paste(geno, sub(paste(idExp, "-", sep = ""), "Pot ", pot), sep = " - "),
+                inside = F, irrig_show_mode = "pot", pot = pot,
+                add_SWC = T, mar = c(2.5, 3.5, 2.5, 7.5))
+    points(E_mmol_per_m2_s_kPa ~ Time, data = dat, type = "o", cex = 0.5)
+    rm(dat)
+    }
+  }
+
+dev.off()
+
+
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01e_transpiration_all_pots_per_condition.pdf", sep = "_")), width = 10, height = 5)
+n.max <- max(aggregate(df$idPot[!duplicated(df$idPot)], by = list(df$idGenotype[!duplicated(df$idPot)]), FUN = length)$x) # maximum number of replicates per treatment
+for (geno in sort(unique(df$idGenotype)))
+  {
+  df.geno <- df[df$idGenotype == geno, ]
+  prepare_kin(df.geno, use_VPD = T, add_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
+              ylim = c(-0.5, 4),
+              main = geno,
+              inside = F, irrig_show_mode = "mean")
+  color = 0
+  for (pot in sort(unique(df.geno$idPot[df.geno$idGenotype == geno])))
+    {
+    #require(scales)
+    color <- color + 1
+    dat <- df[df$idPot == pot, ]
+    points(E_mmol_per_m2_s_kPa ~ Time, data = dat, type = "o", col = hue_pal()(n.max)[color], cex = 0.5)
+    rm(dat)
+    }
+  legend("top", ncol = 4, bty = "n",
+         legend = sub(paste(idExp, "-", sep = ""), "Pot ", sort(unique(df.geno$idPot[df.geno$idGenotype == geno]))),
+         col = hue_pal()(n.max)[1:color], lty = 1, pch = 21, pt.cex = 0.5)
+  rm(df.geno)
+  }
+
+dev.off()
+
+
+
+
+# save output transpiration
 p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "pot_transpiration.csv", sep = "_"))
-write.csv(transpi,p2f,row.names = F)
+write.csv(df,p2f,row.names = F)
 
 # cleaned gravimetrical data
 p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "cleaned_gravi_data.csv", sep = "_"))
