@@ -553,18 +553,18 @@ GENO_LABELS <- c(expression("Col-0"),
 
 # Note: manually change step.increase = 0.001 in add_xy_position() of anova2_jitter() before running the command below, and then revert
 c(myplots_acclim, VAR_acclim) := anova_batch(res,
-                                       anova_jitter_function = anova2_jitter,
-                                       VAR_SELECT = VAR_acclim,
-                                       EXPE_SELECT = idExp,
-                                       PER_SELECT = c("High CO2", "Low light", "Recovery 1"),
-                                       GEN_SELECT = GEN_SELECT,
-                                       IRR_SELECT = "WW",
-                                       filter_phi_for_low_A = F,
-                                       use_within = F,
-                                       MAIN_FACTOR = "idPeriod",
-                                       GROUP = "idGenotype",
-                                       LEGEND_LABELS = GENO_LABELS,
-                                       export_PPTX = T)
+                                             anova_jitter_function = anova2_jitter,
+                                             VAR_SELECT = VAR_acclim,
+                                             EXPE_SELECT = idExp,
+                                             PER_SELECT = c("High CO2", "Low light", "Recovery 1"),
+                                             GEN_SELECT = GEN_SELECT,
+                                             IRR_SELECT = "WW",
+                                             filter_phi_for_low_A = F,
+                                             use_within = F,
+                                             MAIN_FACTOR = "idPeriod",
+                                             GROUP = "idGenotype",
+                                             LEGEND_LABELS = GENO_LABELS,
+                                             export_PPTX = T)
 
 # The code is commented to secure the pptx file (manual step above)
 #dev.new(width = 6.5, height = 4.5, unit = "in", noRStudioGD = T)
