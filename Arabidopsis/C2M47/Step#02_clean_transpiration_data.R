@@ -93,80 +93,16 @@ dir_Exp <- file.path(here::here(), spcs, idExp)
 #------------------------------------------------------------------------------#
 
 
-# Transpiration data
-# calculated from "cleaned_outliers.csv" and "Transpiration_calculations_v2.Rmd"
+# Transpiration data calculated from Step#01
 df <- read.csv(file.path(dir_Exp, "Processed_data", "C2M47_pot_transpiration.csv"))
-df <- df[, c("idPot", "idGenotype", "idWatering", "decimalDay", "E_mmol_per_m2_s", "meanVPD", "E_mmol_per_m2_s_kPa", "SWC")]
-
-# Format the dataframe with a uniform time sequence for all pots (if not done at Step#01, add lines and print warning messages)
-df <- format_time(df, Time_var = "decimalDay", Trt_var = c("idGenotype", "idWatering"), time_step = 30)
-
-# Create the column 'Trt' (concatenation of the statistical treatments)
-df$Trt <- paste(df$idGenotype, df$idWatering, sep = " - ")
-
-
-
-#------------------------------------------------------------------------------#
-#                       Plot kinetics of individual pots                       #
-#------------------------------------------------------------------------------#
-
-if (!dir.exists(file.path(dir_Exp, "Figures"))) { dir.create(file.path(dir_Exp, "Figures")) }
-pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02a_plot_all_pots.pdf", sep = "_")), width = 10, height = 5)
-for (irr in c("WW", "WS"))
-  {
-  for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
-    {
-    for (pot in sort(unique(df$idPot[df$idWatering == irr & df$idGenotype == geno])))
-      {
-      dat <- df[df$idPot == pot, ]
-      prepare_kin(dat, use_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
-                  main = paste(geno, irr, paste("Pot", pot, sep = " "), sep = " - "),
-                  inside = F, irrig_show_mode = "pot", pot = pot,
-                  add_SWC = T, mar = c(2.5, 3.5, 2.5, 7.5))
-      points(E_mmol_per_m2_s_kPa ~ Time, data = dat, type = "o", cex = 0.5)
-      rm(dat)
-      }
-    }
-  }
-
-dev.off()
-
-
-pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02b_plot_all_pots_per_condition.pdf", sep = "_")), width = 10, height = 5)
-n.max <- max(aggregate(df$idPot[!duplicated(df$idPot)], by = list(df$Trt[!duplicated(df$idPot)]), FUN = length)$x) # maximum number of replicates per treatment
-for (irr in c("WW", "WS"))
-  {
-  for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
-    {
-    df.geno <- df[df$idWatering == irr & df$idGenotype == geno, ]
-    prepare_kin(df.geno, Time_var = "Time", E_var = "E_mmol_per_m2_s",
-                main = paste(geno, irr, sep = " - "),
-                inside = F)
-    color = 0
-    for (pot in sort(unique(df.geno$idPot[df.geno$idGenotype == geno])))
-      {
-      #require(scales)
-      color <- color + 1
-      dat <- df[df$idPot == pot, ]
-      points(E_mmol_per_m2_s ~ Time, data = dat, type = "o", col = hue_pal()(n.max)[color], cex = 0.5)
-      rm(dat)
-      }
-    legend("top", ncol = 4, bty = "n",
-           legend = paste("Pot", sort(unique(df.geno$idPot[df.geno$idGenotype == geno])), sep = " "),
-           col = hue_pal()(n.max)[1:color], lty = 1, pch = 21, pt.cex = 0.5)
-    rm(df.geno)
-    }
-  }
-
-dev.off()
-
+df <- df[, c("idObs", "idPot", "Trt", "idGenotype", "idWatering", "Time", "Exact_Time_min", "E_mmol_per_m2_s", "meanVPD", "E_mmol_per_m2_s_kPa", "SWC")]
 
 
 #------------------------------------------------------------------------------#
 #                     Identify series of outliers visually                     #
 #------------------------------------------------------------------------------#
 
-# Inspection of the PDF files generated above allows identifying outliers visually,
+# Inspection of the PDF files generated at Step#01 (transpiration) allows identifying outliers visually,
 # based on  series of inconsistent data (that will be identified as grey points in the next plots).
 
   ## Create the column 'outlier' for identification (TRUE or FALSE)
@@ -282,7 +218,7 @@ df <- detect_outliers(df,
 hist(df$sum_out)
 
 # Visualize individual curves with outliers
-pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02c_visualize_potential_outliers_all_pots.pdf", sep = "_")), width = 10, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02a_visualize_potential_outliers_all_pots.pdf", sep = "_")), width = 10, height = 5)
 for (irr in c("WW", "WS"))
   {
   for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
@@ -358,7 +294,7 @@ df$E_estimate_per_kPa <- df$E_estimate / df$meanVPD
 #require(ggplot2)
 #require(ggpmisc)
   
-pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02d_check_transition_estimates.pdf", sep = "_")), width = 8, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02b_check_transition_estimates.pdf", sep = "_")), width = 8, height = 5)
 
 maxi <- max(c(df$E_clean[!is.na(df$E_estimate)], df$E_estimate), na.rm = T)
 
@@ -401,7 +337,7 @@ dev.off()
 #------------------------------------------------------------------------------#
   
 # Visualize individual curves with outliers and transition estimates
-pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02e_visualize_corrected_data_all_pots.pdf", sep = "_")), width = 10, height = 5)
+pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02c_visualize_corrected_data_all_pots.pdf", sep = "_")), width = 10, height = 5)
 for (irr in c("WW", "WS"))
   {
   for (geno in sort(unique(df$idGenotype[df$idWatering == irr])))
