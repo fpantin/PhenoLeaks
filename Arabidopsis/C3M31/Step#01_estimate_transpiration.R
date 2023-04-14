@@ -588,6 +588,8 @@ for (geno in sort(unique(df$idGenotype)))
 dev.off()
 
 
+
+# save output transpiration
 p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "pot_transpiration.csv", sep = "_"))
 write.csv(df,p2f,row.names = F)
 
