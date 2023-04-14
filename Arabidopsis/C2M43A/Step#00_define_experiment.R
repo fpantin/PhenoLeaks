@@ -93,13 +93,13 @@ set_constants_C2M43A <- function ()
   Time_ON0 <- 81+8/24
   
   # Time when the experiment was set up and the balance started to be tested (d)
-  #Time_setup <- -7.5/24 # useless here since Time_setup = Time_start_exp
+  Time_setup <- -0.8
   
   # Start of the experiment proper (d)
-  Time_start_exp <- -7.5/24 - 1/60/24 # 1 min subtracted to avoid rounding issues (the 'real' value should be included in the interval Time_start_exp:Time_end_exp)
+  Time_start_exp <- Time_setup #-7.5/24 - 1/60/24 # 1 min subtracted to avoid rounding issues (the 'real' value should be included in the interval Time_start_exp:Time_end_exp)
   
   # End of the proper experiment (d)
-  Time_end_exp <- 3+(Pho_Per+3.5)/24 + 1/60/24 # 1 min added to avoid rounding issues (the 'real' value should be included in the interval Time_start_exp:Time_end_exp)
+  Time_end_exp <- 4+3.5/24 #3+(Pho_Per+3.5)/24 + 1/60/24 # 1 min added to avoid rounding issues (the 'real' value should be included in the interval Time_start_exp:Time_end_exp)
 
   # time in UTC when the light was switched off and the darkperiod starts (HH:MM:SS, UTC)
   lightsOFF <-  "20:00:00" 
@@ -154,8 +154,8 @@ set_colors_C2M43A <- function ()
   ColorsTrt$Trt <- paste(ColorsTrt$idGenotype, ColorsTrt$idWatering, sep = " - ")
 
   
-  t1 <- c(-0.5, 2+3/24, 2+5/24, 3+3/24, 3+5/24+10/60/24)
-  t2 <- c(2+3/24, 2+5/24, 3+3/24, 3+5/24+10/60/24, 4)
+  t1 <- c(-1, 2+3/24, 2+5/24, 3+3/24, 3+5/24+10/60/24)
+  t2 <- c(2+3/24, 2+5/24, 3+3/24, 3+5/24+10/60/24, 4+3.5/24)
   ColorsPeriod <- data.frame(idPeriod = c("Control 1", "Low VPD", "Control 2", "High VPD", "Control 3"),
                              Time1 = t1,
                              Time2 = t2,
