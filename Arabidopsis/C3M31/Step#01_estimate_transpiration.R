@@ -67,10 +67,10 @@ for (pkg in c("splitstackshape", "here", "scales"))
 dir_Exp <- file.path(here::here(), spcs, idExp)
 
 # To check all constants, enter:
-#set_constants_C2M47()
+#set_constants_C3M31()
 
 # To check the colors, enter:
-#set_colors_C2M47()
+#set_colors_C3M31()
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                                                              #
