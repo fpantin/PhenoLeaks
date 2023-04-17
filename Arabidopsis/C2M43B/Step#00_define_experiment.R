@@ -94,16 +94,16 @@ set_constants_C2M43B <- function ()
   Time_ON0 <- 103+8/24
   
   # Time when the experiment was set up and the balance started to be tested (d)
-  #Time_setup <- -1 + 1.5/24 # useless here since Time_setup = Time_start_exp
+  Time_setup <- -2
   
   # Start of the experiment proper (d)
   Time_start_exp <- -1 + 1.5/24 - 1/60/24 # 1 min subtracted to avoid rounding issues (the 'real' value should be included in the interval Time_start_exp:Time_end_exp)
   
   # End of the proper experiment (d)
-  Time_end_exp <- 5 + 2/24 + 1/60/24 # 1 min added to avoid rounding issues (the 'real' value should be included in the interval Time_start_exp:Time_end_exp)
+  Time_end_exp <- 4 + 7/24 + 1/60/24 # 1 min added to avoid rounding issues (the 'real' value should be included in the interval Time_start_exp:Time_end_exp)
   
   # time in UTC when the light was switched off and the darkperiod starts (HH:MM:SS)
-  lightsOFF <-  "20:00:00" 
+  lightsOFF <- "20:00:00" 
   
   # Duration covering the rapid stomatal movements at the transitions (min)
   # Corresponds here to the first data point after a day/night transition.
@@ -160,7 +160,7 @@ set_colors_C2M43B <- function ()
   ColorsTrt$Trt <- paste(ColorsTrt$idGenotype, ColorsTrt$idWatering, sep = " - ")
 
   
-  t1 <- c(-1, 3, 4, 5)
+  t1 <- c(-2, 3, 4, 5)
   t2 <- c(3, 4, 5, 6)
   ColorsPeriod <- data.frame(idPeriod = c("Control", "Low light 1", "Low light 2", "Low light 3"),
                              Time1 = t1,
@@ -191,9 +191,10 @@ if (file.exists(irrig_file))
   
   # Check the number of irrigation events for each pot
   aggregate(list(N = irrig$decimalDay), by = list(idPot = irrig$idPot), FUN = length)
-  # --> All pots have 1 irrigation event except pot 108 that has 2 (one additional event detected early in the kinetics)
-  # Inspection of the transpiration data shows this pot will be removed (erratic data), so delete this early event
-  irrig <- irrig[-which(irrig$idPot == "108" & irrig$decimalDay < 103), ]
+  # --> All pots have 2 irrigation events except pot 123 where only one is detected (the second one is not because too many missing values before)
+  # Assign an "empty" irrigation event to this pot:
+  irrig <- rbind(irrig,
+                 data.frame(idPot = 123, weight_before = NA, weight_after = NA, predicted_water_add = NA, from_id = NA, decimalDay = NA, note = NA))
   aggregate(list(N = irrig$decimalDay), by = list(idPot = irrig$idPot), FUN = length)
   # --> OK
   
@@ -203,7 +204,10 @@ if (file.exists(irrig_file))
     {
     irrig$event[irrig$idPot == pot] <- 1:(nrow(irrig[irrig$idPot == pot,]))
     }
-  mean_irrig_time <- aggregate(list(MeanTime = irrig$decimalDay), by = list(event = irrig$event), FUN = mean)
+  mean_irrig_time <- aggregate(list(MeanTime = irrig$decimalDay), by = list(event = irrig$event), FUN = mean, na.rm = T)
+  
+  # Replace the NA by the mean time of the second irrigation event for pot 123 (that will be removed anyway due to erratic data):
+  irrig$decimalDay[nrow(irrig)] <- mean_irrig_time$MeanTime[2]
   }
 
 
@@ -238,10 +242,12 @@ rectangles_environment_C2M43B <- function (col.per = ColorsPeriod, # the datafra
   if (!export_PPTX) clip(usr[1], usr[2], usr[3], usr[4])
   
   y.text <- (y1 + y2) / 2 - if (export_PPTX) 0.015 else 0
+  t.control <- 1 + if (Time_var == "decimalDay") Time_ON0 else 0
+  text(t.control, y.text, "Control", cex = cex.env, xpd = T, col = "white")
   t1.low.light <- col.per[2, paste(Time_var, 1, sep = "")]
-  text(t1.low.light+Pho_Per/24/2+0:2, y.text, "Low light", cex = cex.env, xpd = T)
-  segments(c(t1.low.light)+Pho_Per/24+0:1, y1, c(t1.low.light)+Pho_Per/24+0:1, y2, col = "gray", lty = "22", xpd = T)
-  segments(c(t1.low.light)+1:2, y1, c(t1.low.light)+1:2, y2, col = "gray", lty = "22", xpd = T)
+  text(t1.low.light+Pho_Per/24/2+0:1, y.text, "Low light", cex = cex.env, xpd = T)
+  segments(c(t1.low.light)+Pho_Per/24, y1, c(t1.low.light)+Pho_Per/24, y2, col = "gray", lty = "22", xpd = T)
+  segments(c(t1.low.light)+1, y1, c(t1.low.light)+1, y2, col = "gray", lty = "22", xpd = T)
   
   if (irrig_show_mode != "none" & file.exists(irrig_file))
     {
@@ -249,12 +255,18 @@ rectangles_environment_C2M43B <- function (col.per = ColorsPeriod, # the datafra
     else if (irrig_show_mode == "pot") t_irrig <- irrig$decimalDay[irrig$idPot == pot]
     else stop ("'irrig_show_mode' should be \"none\", \"mean\" or \"pot\".")
     if (Time_var != "decimalDay") t_irrig <- t_irrig - Time_ON0
-    text(t_irrig, usr[3] + 0.025*(usr[4] - usr[3]), "Rehydration", col = "black", cex = cex.env)
-    #require(igraph)
+    text(t_irrig, usr[3] + (if (!export_PPTX) 0.025 else 0.075)*(usr[4] - usr[3]),
+         if (!export_PPTX) "fixed watering" else "fixed\nwatering",
+         col = "black", cex = cex.env)
     iArrows <- igraph:::igraph.Arrows
-    iArrows(t_irrig, rep(usr[3] + 0.05*(usr[4] - usr[3]), length(t_irrig)),
-            t_irrig, rep(usr[3] + 0.15*(usr[4] - usr[3]), length(t_irrig)),
-            h.lwd = 1, sh.lwd = 1, sh.col = "black", curve = 0, width = 1, size = 0.5)
+    iArrows(t_irrig, rep(usr[3] + (if (!export_PPTX) 0.05 else 0.15)*(usr[4] - usr[3]), length(t_irrig)),
+            t_irrig, rep(usr[3] + (if (!export_PPTX) 0.15 else 0.25)*(usr[4] - usr[3]), length(t_irrig)),
+            h.lwd = if (!export_PPTX) 1 else 0.75,
+            sh.lwd = if (!export_PPTX) 1 else 0.75,
+            sh.col = "black",
+            curve = 0,
+            width = if (!export_PPTX) 1 else 0.75,
+            size = if (!export_PPTX) 0.5 else 0.3)
     }
   }
 
