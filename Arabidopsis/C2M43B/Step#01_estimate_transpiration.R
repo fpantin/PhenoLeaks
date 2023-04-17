@@ -394,30 +394,31 @@ for (i in unique(df$idPot)){
   df$obvious_outlier[df$idPot == i & df$ID %in% c(out_obvious) ] <- T # already take this information for the hotspot analysis
   df$outlier[df$side_outlier | df$obvious_outlier] <- T
   
-  # for (j in hotspots){
-  #   # check which points are real outliers at this timepoint
-  #   # outliers detection based on input on the fit. Per hotspot only 1 point can be detected
-  #   
-  #   # j = hotspots[8]
-  #   # j = 47
-  #   
-  #   new_outliers <- Outliers_v5(time = df$decimalDay[df$idPot == as.character(i)], # time input
-  #                               weight = df$Weight_corr[df$idPot == as.character(i)], # weight input
-  #                               hotspot = j, # ID of the hotspot
-  #                               lightPeriod = df$lightPeriod[df$idPot == as.character(i)],
-  #                               outlier = df$outlier[df$idPot == as.character(i)],
-  #                               startdark = startdark,
-  #                               period = darkperiod,
-  #                               daynight = "yes",
-  #                               min_around = 90)
-  #   # df$outlier[df$idPotManip == i & df$ID %in% c(new_outliers) ] <- T
-  #   outliers <- c(outliers,new_outliers)
-  # }
-  # 
-  # # outliers <- c(outliers,out_sides)
-  # # outliers <- c(outliers)
+  for (j in hotspots){
+    # check which points are real outliers at this timepoint
+    # outliers detection based on input on the fit. Per hotspot only 1 point can be detected
+
+    # j = hotspots[8]
+    # j = 47
+
+    new_outliers <- Outliers_v5(time = df$decimalDay[df$idPot == as.character(i)], # time input
+                                weight = df$Weight_corr[df$idPot == as.character(i)], # weight input
+                                hotspot = j, # ID of the hotspot
+                                lightPeriod = df$lightPeriod[df$idPot == as.character(i)],
+                                outlier = df$outlier[df$idPot == as.character(i)],
+                                startdark = startdark,
+                                period = darkperiod,
+                                daynight = "yes",
+                                min_around = 90)
+    # df$outlier[df$idPotManip == i & df$ID %in% c(new_outliers) ] <- T
+    outliers <- c(outliers,new_outliers)
+  }
+
+  # outliers <- c(outliers,out_sides)
+  # outliers <- c(outliers)
   
-  df$hotspot_outlier[df$idPot == i] <- F
+  #df$hotspot_outlier[df$idPot == i] <- F
+  df$hotspot_outlier[df$idPot == i & df$ID %in% outliers ] <- T
   
 }
 
