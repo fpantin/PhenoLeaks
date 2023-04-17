@@ -23,6 +23,24 @@
 #     >                                                                  <     #
 #>                                                                            <#
 
+
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
+#                                                                              #
+#                                     WARNING                                  #
+#                                                                              #
+# This script may generate the error:                                          #
+#                                                                              #
+#         Error in `stat_poly_line()`                                          #
+#                                                                              #
+# if run just after Step#01 (unknown reason).                                  #
+# If this happens, just restart the session (Ctrl + Shift + F10 in RStudio)    #
+# and run the script again.                                                    #
+#                                                                              #
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
+
+
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                                                              #
 #                              (1)  Load libraries                             #

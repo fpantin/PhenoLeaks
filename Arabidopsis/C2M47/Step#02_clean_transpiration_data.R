@@ -23,6 +23,24 @@
 #     >                                                                  <     #
 #>                                                                            <#
 
+
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
+#                                                                              #
+#                                     WARNING                                  #
+#                                                                              #
+# This script may generate the error:                                          #
+#                                                                              #
+#         Error in `stat_poly_line()`                                          #
+#                                                                              #
+# if run just after Step#01 (unknown reason).                                  #
+# If this happens, just restart the session (Ctrl + Shift + F10 in RStudio)    #
+# and run the script again.                                                    #
+#                                                                              #
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
+
+
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                                                              #
 #                              (1)  Load libraries                             #
@@ -109,10 +127,7 @@ df <- df[, c("idObs", "idPot", "Trt", "idGenotype", "idWatering", "Time", "Exact
   df$outlier <- F
 
   
-  ## Initial set-up - All pots
-  
-  # Data of the first 1.25 days (before 'Time_start_exp') are systematically discarded
-  # because there were noisy (due to mechanical stability of the mobile scale that was then improved)
+  ## All pots
   df$outlier[df$Time < Time_start_exp] <- T
   
   
