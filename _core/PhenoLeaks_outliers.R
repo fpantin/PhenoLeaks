@@ -231,7 +231,7 @@ estim_transitions <- function (all_dat, # the whole dataframe
   # Check that no new lines have been created.
   # This would occur if some time points have been deleted for some pots instead of having set the transpiration value to NA.
   # Step#01 normally avoids this problem by generating regular time points for all pots over the same time interval.
-  # Early call of 'format_time()' at Step#02 also normally corrects this problem.
+  # Early call of 'format_time()' at Step#02 also normally corrects this problem -> now done at the end of Step#01.
   # But this would also occur if time_start < Time_start_exp or time_end > Time_end_exp (i.e. extrapolation).
   
     ## If extrapolation is deemed acceptable, then the dataframe should be rearranged at user's own risks (NOT TESTED):
@@ -256,8 +256,11 @@ estim_transitions <- function (all_dat, # the whole dataframe
       all_dat <- identify_transitions(all_dat)
       }
     
-    ## Check that there is no line with empty 'idobs'
+    ## Check that there is no line with empty 'idObs'
     if (length(which(is.na(all_dat$idObs))) > 0) stop ("Inconsistent number of transition estimates ---> debug")
+  
+    ## Check that there is no gap in 'idObs'
+    all_dat <- all_dat[order(all_dat$idObs), ] # required if the order of the pots have changed (depending whether it is taken as a numeric or a character)
     if (length(which(diff(all_dat$idObs) != 1)) > 0) stop ("Inconsistent number of transition estimates ---> debug")
   
     ## Check that the number of estimates is consistent
