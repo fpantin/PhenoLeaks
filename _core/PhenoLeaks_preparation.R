@@ -315,7 +315,14 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive",method = "automatic"){
       dataindex <- allpoints[input$date[allpoints] >= beforedater & input$date[allpoints] <= afterdater]
       dataindex2 <- dataindex[dataindex < j] # and before the point of the difference, NOT the point itself to avoid outlier sensibility
       info <- "before"
-      }
+    }
+    if (length(dataindex2) < 2){ # if still only 1 point, select also the point itself
+      beforedater <- middledater - 1*60* timer # add .. hour back in time
+      afterdater <- middledater + 1*60* timer # add .. hour
+      dataindex <- allpoints[input$date[allpoints] >= beforedater & input$date[allpoints] <= afterdater]
+      dataindex2 <- dataindex[dataindex <= j] # and before the point of the difference, NOT the point itself to avoid outlier sensibility
+      info <- "before"
+    }
     return(c(dataindex2,info))
   }
   
@@ -333,7 +340,7 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive",method = "automatic"){
                          note = NULL)
   
   for (id in unique(input$idPot)){
-    # id = "217"
+    # id = "123"
     # id = unique(input$idPot)[1]
     allpoints <- which(input$idPot == id) # select the index numbers (not ID col!). 
     
@@ -359,7 +366,7 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive",method = "automatic"){
       
       # for every measurement for this pot...
       # j are index numbers!! not ID numbers
-      # j = 22
+      # j = 6503
       if(!j %in% outlier){ # this is when there is one obvious outlier for which we do not calculate the difference for the next point
         beforeweight = input$weight[j]
         afterweight = input$weight[j + 1]
