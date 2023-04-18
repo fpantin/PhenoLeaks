@@ -507,9 +507,10 @@ df <- df[order(df$idPot,df$decimalDay),]
 df$SWC <- 0
 for (i in unique(df$idPot)){
   # i = "217"
+  plastic_tare <- 4 # 4 g (cellophane + grid)
   potweight <- swc$nonPerforatedPotWeight[swc$idPot == i]+swc$perforatedPotWeight[swc$idPot == i]
   drysoilweight <- swc$drySoilWeight[swc$idPot == i]
-  df$SWC[df$idPot == i] <- (df$initial_weight[df$idPot == i] - drysoilweight - potweight)/drysoilweight
+  df$SWC[df$idPot == i] <- (df$initial_weight[df$idPot == i] - drysoilweight - potweight - plastic_tare)/drysoilweight
 }
 
 # add the mean SWC to the transpiration file
@@ -518,7 +519,7 @@ transpi$SWC <- 0
 for (i in 1:nrow(transpi)){
   # i = 2
   id = transpi$idPot[i]
-  transpi$SWC[i] <- mean(df$SWC[df$idPot == id & df$decimalDay >= transpi$min_decimalDay[i] & df$decimalDay <= transpi$max_decimalDay[i]]) 
+  transpi$SWC[i] <- mean(df$SWC[df$idPot == id & df$decimalDay >= transpi$min_decimalDay[i] & df$decimalDay <= transpi$max_decimalDay[i]], na.rm = T) 
 }
 # head(transpi)
 
@@ -531,15 +532,15 @@ colnames(transpi)[match("Treatment",colnames(transpi))] <- "idWatering"
 #------------------------------------------------------------------------------#
 
 # Format the dataframe with a uniform time sequence for all pots that starts at 0 at Time_ON0
-df <- format_time(transpi, Time_var = "decimalDay", Trt_var = c("idGenotype"), time_step = 30)
+transpi <- format_time(transpi, Time_var = "decimalDay", Trt_var = c("idGenotype"), time_step = 30)
 
 ## New version of the graphs (with soil water content and VPD)
 pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01d_transpiration_all_pots.pdf", sep = "_")), width = 10, height = 5)
-for (geno in sort(unique(df$idGenotype)))
+for (geno in sort(unique(transpi$idGenotype)))
   {
-  for (pot in sort(unique(df$idPot[df$idGenotype == geno])))
+  for (pot in sort(unique(transpi$idPot[transpi$idGenotype == geno])))
     {
-    dat <- df[df$idPot == pot, ]
+    dat <- transpi[transpi$idPot == pot, ]
     prepare_kin(dat, use_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
                 main = paste(geno, " - Pot ", pot, sep = ""),
                 inside = F, irrig_show_mode = "pot", pot = pot,
@@ -553,25 +554,25 @@ dev.off()
 
 
 pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01e_transpiration_all_pots_per_condition.pdf", sep = "_")), width = 10, height = 5)
-n.max <- max(aggregate(df$idPot[!duplicated(df$idPot)], by = list(df$idGenotype[!duplicated(df$idPot)]), FUN = length)$x) # maximum number of replicates per treatment
-for (geno in sort(unique(df$idGenotype)))
+n.max <- max(aggregate(transpi$idPot[!duplicated(transpi$idPot)], by = list(transpi$idGenotype[!duplicated(transpi$idPot)]), FUN = length)$x) # maximum number of replicates per treatment
+for (geno in sort(unique(transpi$idGenotype)))
   {
-  df.geno <- df[df$idGenotype == geno, ]
-  prepare_kin(df.geno, use_VPD = T, add_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
+  transpi.geno <- transpi[transpi$idGenotype == geno, ]
+  prepare_kin(transpi.geno, use_VPD = T, add_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
               ylim = c(-0.5, 4),
               main = geno,
               inside = F, irrig_show_mode = "mean")
   color = 0
-  for (pot in sort(unique(df.geno$idPot)))
+  for (pot in sort(unique(transpi.geno$idPot)))
     {
     #require(scales)
     color <- color + 1
-    dat <- df[df$idPot == pot, ]
+    dat <- transpi[transpi$idPot == pot, ]
     points(E_mmol_per_m2_s_kPa ~ Time, data = dat, type = "o", col = hue_pal()(n.max)[color], cex = 0.5)
     rm(dat)
     }
   legend("top", ncol = 4, bty = "n",
-         legend = paste("Pot ", sort(unique(df.geno$idPot[df.geno$idGenotype == geno]))),
+         legend = paste("Pot ", sort(unique(transpi.geno$idPot[df.geno$idGenotype == geno]))),
          col = hue_pal()(n.max)[1:color], lty = 1, pch = 21, pt.cex = 0.5)
   rm(df.geno)
   }
