@@ -370,7 +370,9 @@ for (i in unique(df$idPot)){
                             max_dark = max_dark,
                             min_light = min_light,
                             max_light = max_light,
-                            surf_i = df$surface[df$idPot == as.character(i)])
+                            surf_i = df$surface[df$idPot == as.character(i)],
+                            side_method = "limit",
+                            check= T)
   
   outliers <- c()
   out_sides <- unlist(hotspots[2])
@@ -456,9 +458,17 @@ input = df[!df$outlier,]
 dfE_v7 <- Transpi_calc_v7(input = input, freq = 30, min_around = 90, lightsOFF = lightsOFF, nightperiod = Sko_Per, method = "lm",max = 180,nop=2, max_end = 120) # calculate transpiration with function
 
 # add surface
-dfE_v7$surface = NA # need to check in the future: 217 start is NA for the surface.. 
-for (i in 1:nrow(dfE_v7)){
-  dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay>= dfE_v7$min_decimalDay[i] & grv$decimalDay<= dfE_v7$max_decimalDay[i]])
+dfE_v7$surface = NA
+if(idExp %in% c("C2M43A","C3M31")){
+  # if in the list, than use the previous way to calculate the surface per transpiration timepoint
+  # attention: this method gives variable transpiration even when the initial non-corrected transpiration is equal because at every point the surface is different
+  dfE_v7 <- surface_add(input=dfE_v7)
+}else{
+  # calculate based on the mean surface of the points used to calculate the transpiration (this is )
+  for (i in 1:nrow(dfE_v7)){
+    # i = 133
+    dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay > dfE_v7$min_decimalDay[i] & grv$decimalDay < dfE_v7$max_decimalDay[i]])
+  }
 }
 
 dfE_v7$E_mmol_per_m2_s  = dfE_v7$E / (dfE_v7$surface * 10^-6)
