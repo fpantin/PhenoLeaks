@@ -272,13 +272,11 @@ output <- Rehy_Corr_v4(input = grv,gap = 1)
 df_rehy <- output$output # corrected output
 corr1 <- output$corr1 # 1 run: detected rehydrations
 
-x = c(grv$decimalDay,df_rehy$decimalDay)
-y = c(grv$weight,df_rehy$Weight_corr)
-xlim = range(x)
-ylim = range(y)
-
 ## AJW old version
-# pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01b_correct_irrigation.pdf", sep = "_")), width = 10, height = 10)
+# x = c(grv$decimalDay,df_rehy$decimalDay)
+# y = c(grv$weight,df_rehy$Weight_corr)
+# xlim = range(x)
+# ylim = range(y)# pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01b_correct_irrigation.pdf", sep = "_")), width = 10, height = 10)
 # for (i in genolist$idPot){
 #   # i = idpots[3]
 #   input <- df_rehy[df_rehy$idPot == i,]
@@ -359,7 +357,9 @@ for (i in genolist$idPot){
                             max_dark = max_dark,
                             min_light = min_light,
                             max_light = max_light,
-                            surf_i = df$surface[df$idPot == as.character(i)])
+                            surf_i = df$surface[df$idPot == as.character(i)],
+                            side_method = "limit",
+                            check = T)
   
   outliers <- c()
   out_sides <- unlist(hotspots[2])
@@ -447,11 +447,19 @@ input = df[!df$outlier,]
 dfE_v7 <- Transpi_calc_v7(input = input, freq = 30, min_around = 90, lightsOFF = lightsOFF, nightperiod = Sko_Per, method = "lm",max = 180,nop=2, max_end = 120) # calculate transpiration with function
 
 # add surface
-dfE_v7$surface = NA # need to check in the future: 217 start is NA for the surface.. 
-for (i in 1:nrow(dfE_v7)){
-  # i = 133
-  dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay >= dfE_v7$min_decimalDay[i] & grv$decimalDay <= dfE_v7$max_decimalDay[i]])
+dfE_v7$surface = NA
+if(idExp %in% c("C2M43A","")){
+  # if in the list, than use the previous way to calculate the surface per transpiration timepoint
+  # attention: this method gives variable transpiration even when the initial non-corrected transpiration is equal because at every point the surface is different
+  dfE_v7 <- surface_add(input=dfE_v7)
+}else{
+  # calculate based on the mean surface of the points used to calculate the transpiration (this is )
+  for (i in 1:nrow(dfE_v7)){
+    # i = 133
+    dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay >= dfE_v7$min_decimalDay[i] & grv$decimalDay <= dfE_v7$max_decimalDay[i]])
+  }
 }
+
 
 dfE_v7$E_mmol_per_m2_s  = dfE_v7$E / (dfE_v7$surface * 10^-6)
 # head(dfE_v7)
@@ -572,9 +580,9 @@ for (geno in sort(unique(transpi$idGenotype)))
     rm(dat)
     }
   legend("top", ncol = 4, bty = "n",
-         legend = paste("Pot ", sort(unique(transpi.geno$idPot[df.geno$idGenotype == geno]))),
+         legend = paste("Pot ", sort(unique(transpi.geno$idPot[transpi.geno$idGenotype == geno]))),
          col = hue_pal()(n.max)[1:color], lty = 1, pch = 21, pt.cex = 0.5)
-  rm(df.geno)
+  rm(transpi.geno)
   }
 
 dev.off()
@@ -584,7 +592,7 @@ dev.off()
 
 # save output transpiration
 p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "pot_transpiration.csv", sep = "_"))
-write.csv(df,p2f,row.names = F)
+write.csv(transpi,p2f,row.names = F)
 
 # cleaned gravimetrical data
 p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "cleaned_gravi_data.csv", sep = "_"))
