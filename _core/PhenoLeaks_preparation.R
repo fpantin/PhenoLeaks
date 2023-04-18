@@ -274,7 +274,7 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive",method = "automatic"){
   # Detection
   selecpoint <- function(timer){
     
-    middledater = input$date[j] # get the time
+    middledater = input$date[j] # get the time on the point before
     # select values based on certain time frame
     beforedater <- middledater - 1*60* timer # add .. hour back in time
     afterdater <- middledater + 1*60* timer # add .. hour
@@ -389,6 +389,7 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive",method = "automatic"){
             
             # next point is good point 
             out <- selecpoint(timer = 160) #
+            
             if(length(out)>1){
               # when points are found
               dataindex2 <- as.numeric(out[1:(length(out)-1)])
@@ -467,7 +468,8 @@ Rehy_Corr_v4 <- function(input,gap,jumps="positive",method = "automatic"){
 #             Function to detect gravimetric outliers                          #
 #------------------------------------------------------------------------------#
 
-Outliers_v4_2 <- function(time,weight,startdark,darkperiod,min_dark,max_dark,min_light,max_light,surf_i,dd_surf_i = NULL){
+Outliers_v4_2 <- function(time,weight,startdark,darkperiod,min_dark,max_dark,min_light,max_light,surf_i,dd_surf_i = NULL, 
+                          side_method = "limit",check = F){
   
   #----------------------------------------------------------------------#
   #----------------------explanation-------------------------------------#
@@ -488,13 +490,9 @@ Outliers_v4_2 <- function(time,weight,startdark,darkperiod,min_dark,max_dark,min
   #     - min_light: lower limit of transpiration during the light period 
   #     - max_light: upper limit of transpiration during the light period 
   #     - surface: surface in mm2, if more surfaces (growth) then is a vector
+  #     - side_method: "limit" or "quantile", to detect outliers from the start of the kinetic
+  #     - check : F or T, check if every obvious outlier is still detected when the point before is taken out. 
   
-  ###### NEW in version 4_2 in comparison with v4: adapted to Arabidopsis
-  #     - more then 1 surface 
-  #     - more then 3 lightperiods (first only 3, starting with day!)
-  
-  # to be improved:
-  #     - first point of a period always taken out so no outlier detection on this one. 
   #----------------------------------------------------------------------#
   #----------------------environment-------------------------------------#
   #----------------------------------------------------------------------#
@@ -571,58 +569,76 @@ Outliers_v4_2 <- function(time,weight,startdark,darkperiod,min_dark,max_dark,min
   
   cdata <- data.frame(ids,slopes,transpi,transpi_times,transpi_lightPeriod)
   
-  # first point selection: what is the first good point?
-  # limits depending if period starts in dark or in light!
-  first_point <- c(1:3)
-  # define limits for first points
-  if(all(transpi_lightPeriod[first_point] == "light") | all(transpi_lightPeriod[first_point] == "dark")){
-    # if all the first points are in 1 lightperiod either dark of light
-    if(all(transpi_lightPeriod[first_point] == "light")){
-      min_lim <- min_light
+  if(side_method == "limit"){
+    # first point selection: what is the first good point?
+    # limits depending if period starts in dark or in light!
+    first_point <- c(1:3)
+    # define limits for first points
+    if(all(transpi_lightPeriod[first_point] == "light") | all(transpi_lightPeriod[first_point] == "dark")){
+      # if all the first points are in 1 lightperiod either dark of light
+      if(all(transpi_lightPeriod[first_point] == "light")){
+        min_lim <- min_light
+        max_lim <- max_light
+      }
+      if(all(transpi_lightPeriod[first_point] == "dark")){
+        min_lim <- min_dark
+        max_lim <- max_dark
+      }
+      
+    }else{
+      # if first points are a mix of 2 lightperiods, take maximum limits
+      min_lim <- min_dark
       max_lim <- max_light
     }
-    if(all(transpi_lightPeriod[first_point] == "dark")){
-      min_lim <- min_dark
-      max_lim <- max_dark
+    while( max(first_point) <= max(input$ids) - 3 &
+           all(transpi[first_point] > -max_lim & transpi[first_point] < -min_lim)== F){
+      # check when for the first time 3 points in a row show a good transpiration based on limit given at start
+      
+      first_point <- first_point + 1 
     }
     
-  }else{
-    # if first points are a mix of 2 lightperiods, take maximum limits
-    min_lim <- min_dark
-    max_lim <- max_light
-  }
-  
-  while( max(first_point) <= max(input$ids) - 3 &
-         all(transpi[first_point] > -max_lim & transpi[first_point] < -min_lim)== F){
-    # check when for the first time 3 points in a row show a good transpiration
-    # diff(c(as.numeric(quantile(transpi[first_point])[2]),as.numeric(quantile(transpi[first_point])[4]))) > 0.5
-    first_point <- first_point + 1 
-  }
-  
-  # last point selection: what is the last good point?
-  last_point <- max(ids) - c(3:1)
-  if(all(transpi_lightPeriod[last_point] == "light") | all(transpi_lightPeriod[last_point] == "dark")){
-    # if all the first points are in 1 lightperiod either dark of light
-    if(all(transpi_lightPeriod[last_point] == "light")){
-      min_lim <- min_light
+    # last point selection: what is the last good point?
+    last_point <- max(ids) - c(3:1)
+    if(all(transpi_lightPeriod[last_point] == "light") | all(transpi_lightPeriod[last_point] == "dark")){
+      # if all the first points are in 1 lightperiod either dark of light
+      if(all(transpi_lightPeriod[last_point] == "light")){
+        min_lim <- min_light
+        max_lim <- max_light
+      }
+      if(all(transpi_lightPeriod[last_point] == "dark")){
+        min_lim <- min_dark
+        max_lim <- max_dark
+      }
+      
+    }else{
+      # if first points are a mix of 2 lightperiods, take maximum limits
+      min_lim <- min_dark
       max_lim <- max_light
     }
-    if(all(transpi_lightPeriod[last_point] == "dark")){
-      min_lim <- min_dark
-      max_lim <- max_dark
+    while(min(last_point) >= min(input$ids)+3 & all(transpi[last_point] > -max_lim & transpi[last_point] < -min_lim +0.1)== F ){
+      # check when for the last time 3 points in a row show a good transpiration
+      last_point <- last_point - 1 
     }
-    
-  }else{
-    # if first points are a mix of 2 lightperiods, take maximum limits
-    min_lim <- min_dark
-    max_lim <- max_light
   }
-  
-  while(min(last_point) >= min(input$ids)+3 & all(transpi[last_point] > -max_lim & transpi[last_point] < -min_lim +0.1)== F ){
-    # check when for the last time 3 points in a row show a good transpiration
+  if(side_method == "quantile"){
     # quantile accepts pots that are variable but stable at the beginning
-    # diff(c(as.numeric(quantile(transpi[last_point])[2]),as.numeric(quantile(transpi[last_point])[4]))) > 0.5
-    last_point <- last_point - 1 
+    
+    # first point selection: what is the first good point?
+    # limits depending if period starts in dark or in light!
+    first_point <- c(1:3)
+    while( max(first_point) <= max(input$ids) - 3 & diff(c(as.numeric(quantile(transpi[first_point])[2]),as.numeric(quantile(transpi[first_point])[4]))) > 0.5){
+      # check when for the first time 3 points in a row show a good transpiration based on quantile
+      
+      first_point <- first_point + 1 
+    }
+    
+    # last point selection: what is the last good point?
+    last_point <- max(ids) - c(3:1)
+    while(min(last_point) >= min(input$ids)+3 & diff(c(as.numeric(quantile(transpi[last_point])[2]),as.numeric(quantile(transpi[last_point])[4]))) > 0.5){
+      # check when for the last time 3 points in a row show a good transpiration
+      last_point <- last_point - 1 
+    }
+    
   }
   
   first_point <- first_point[1] 
@@ -752,60 +768,29 @@ Outliers_v4_2 <- function(time,weight,startdark,darkperiod,min_dark,max_dark,min
     
     transition_ids_outliers <- cdata$ids[cdata$ids %in% transition_ids  & (cdata$transpi < -max_light | cdata$transpi > -min_dark)] # limit of both dark and night because transition
     
-    
-    obvious_outliers_final <- c()
-    # obvious_outliers_final <- obvious_outliers
-    
-    # check here if it is really the second point that is the outlier or that it is the first point.
-    # normally it is the second point because if not the point before would be already detected. 
-    # this function also checks when two consecutive outliers are detected the second one is the result of the other first one.
-    # only need to check how the ids are correctly identified. OK old ids are taken into account!
-    if(length(obvious_outliers)> 0){
-      # check obvious ones (always taken out directly!! So need to be sure)
-      obvious_outliers <- obvious_outliers[order(obvious_outliers)]
-      notsoobvious_outliers <- c()
-      
-      while(length(obvious_outliers) > 0 ){
-        # to check if by taking out the point before the outlier, the outlier is still an outlier. Do this is a loop that if the point before is an outlier, this one is taken out and compared to the good one before.
-        i = obvious_outliers[1]
-        # print(i)
-        realouttest_ids <- c(obvious_outliers_final, i - 1) # consisting out of outliers detected before in this loop and the point before!
-        input1 <- input[!input$ids %in% c(realouttest_ids) & input$ids >= first_point & input$ids <= last_point + 1,] # redefine the df without the outlier
-        
-        slopes <- diff(input1$weight) / diff(input1$time)
-        ids <- input1$ids[-1] # same ids as before
-        units <- input1$units[-1]
-        
-        transpi <- slopes / units
-        transpi_times <- input1$time[-nrow(input1)] + (diff(input1$time)/2)
-        transpi_lightPeriod <- dd_light(dd= transpi_times)
-        cdatab <- data.frame(ids,slopes,transpi,transpi_times,transpi_lightPeriod)
-        cdatab <- cdatab[cdatab$ids >= first_point & cdatab$ids <= last_point,]
-        
-        dark_ids <- cdatab$ids[!cdatab$ids %in% transition_ids & cdatab$ids >= i & cdatab$transpi_lightPeriod == "dark" & (cdatab$transpi < -max_dark | cdatab$transpi > -min_dark )] # redefine other outliers. 
-        
-        light_ids <- cdatab$ids[!cdatab$ids %in% transition_ids & cdatab$ids >= i & cdatab$transpi_lightPeriod == "light" & (cdatab$transpi < -max_light | cdatab$transpi > -min_light)]# redefine other outliers. 
-        
-        obvious_outliers <- c(dark_ids,light_ids)
+    if (check == F){
+      obvious_outliers_final <- obvious_outliers
+    }else{
+      obvious_outliers_final <- c()
+      # 
+      # check here if it is really the second point that is the outlier or that it is the first point.
+      # normally it is the second point because if not the point before would be already detected. 
+      # this function also checks when two consecutive outliers are detected the second one is the result of the other first one.
+      # only need to check how the ids are correctly identified. OK old ids are taken into account!
+      if(length(obvious_outliers)> 0){
+        # check obvious ones (always taken out directly!! So need to be sure)
         obvious_outliers <- obvious_outliers[order(obvious_outliers)]
-        # obvious_outliers <- obvious_outliers + 1 # take into account the shift in ids when one ID is taken out.
+        notsoobvious_outliers <- c()
         
-        if(i %in% obvious_outliers){
-          # indicates that this one really is an outlier and not because of the first one
-          obvious_outliers_final <- c(obvious_outliers_final,i)
-          obvious_outliers <- obvious_outliers[!obvious_outliers %in% i] # take out the 'real' bad one so that the loop continues with the rest!
-          obvious_outliers <- obvious_outliers[order(obvious_outliers)]
-        }else{
-          # less strong indication that it is really an outlier: how to test this?
-          notsoobvious_outliers <- c(notsoobvious_outliers,i)
-        }
-        
-        # now need actually a step that if the last one is detected as an outlier, by taking it out no new outliers are detected. Last step.
-        if(length(obvious_outliers) == 0){ # the last one
-          input1 <- input[!input$ids %in% c(obvious_outliers_final,i) & input$ids >= first_point & input$ids <= last_point + 1,] # redefine the df without the outlier
+        while(length(obvious_outliers) > 0 ){
+          # to check if by taking out the point before the outlier, the outlier is still an outlier. Do this is a loop that if the point before is an outlier, this one is taken out and compared to the good one before.
+          i = obvious_outliers[1]
+          # print(i)
+          realouttest_ids <- c(obvious_outliers_final, i - 1) # consisting out of outliers detected before in this loop and the point before!
+          input1 <- input[!input$ids %in% c(realouttest_ids) & input$ids >= first_point & input$ids <= last_point + 1,] # redefine the df without the outlier
           
           slopes <- diff(input1$weight) / diff(input1$time)
-          ids <- input1$ids[-1]
+          ids <- input1$ids[-1] # same ids as before
           units <- input1$units[-1]
           
           transpi <- slopes / units
@@ -814,13 +799,47 @@ Outliers_v4_2 <- function(time,weight,startdark,darkperiod,min_dark,max_dark,min
           cdatab <- data.frame(ids,slopes,transpi,transpi_times,transpi_lightPeriod)
           cdatab <- cdatab[cdatab$ids >= first_point & cdatab$ids <= last_point,]
           
-          dark_ids <- cdatab$ids[!cdatab$ids %in% transition_ids & cdatab$transpi_lightPeriod == "dark" & (cdatab$transpi < -max_dark | cdatab$transpi > -min_dark )]
-          light_ids <- cdatab$ids[!cdatab$ids %in% transition_ids & cdatab$transpi_lightPeriod == "light" & (cdatab$transpi < -max_light | cdatab$transpi > -min_light)]
-          obvious_outliers_final <- c(obvious_outliers_final,dark_ids,light_ids,transition_ids_outliers)
+          dark_ids <- cdatab$ids[!cdatab$ids %in% transition_ids & cdatab$ids >= i & cdatab$transpi_lightPeriod == "dark" & (cdatab$transpi < -max_dark | cdatab$transpi > -min_dark )] # redefine other outliers. 
+          
+          light_ids <- cdatab$ids[!cdatab$ids %in% transition_ids & cdatab$ids >= i & cdatab$transpi_lightPeriod == "light" & (cdatab$transpi < -max_light | cdatab$transpi > -min_light)]# redefine other outliers. 
+          
+          obvious_outliers <- c(dark_ids,light_ids)
+          obvious_outliers <- obvious_outliers[order(obvious_outliers)]
+          # obvious_outliers <- obvious_outliers + 1 # take into account the shift in ids when one ID is taken out.
+          
+          if(i %in% obvious_outliers){
+            # indicates that this one really is an outlier and not because of the first one
+            obvious_outliers_final <- c(obvious_outliers_final,i)
+            obvious_outliers <- obvious_outliers[!obvious_outliers %in% i] # take out the 'real' bad one so that the loop continues with the rest!
+            obvious_outliers <- obvious_outliers[order(obvious_outliers)]
+          }else{
+            # less strong indication that it is really an outlier: how to test this?
+            notsoobvious_outliers <- c(notsoobvious_outliers,i)
+          }
+          
+          # now need actually a step that if the last one is detected as an outlier, by taking it out no new outliers are detected. Last step.
+          if(length(obvious_outliers) == 0){ # the last one
+            input1 <- input[!input$ids %in% c(obvious_outliers_final,i) & input$ids >= first_point & input$ids <= last_point + 1,] # redefine the df without the outlier
+            
+            slopes <- diff(input1$weight) / diff(input1$time)
+            ids <- input1$ids[-1]
+            units <- input1$units[-1]
+            
+            transpi <- slopes / units
+            transpi_times <- input1$time[-nrow(input1)] + (diff(input1$time)/2)
+            transpi_lightPeriod <- dd_light(dd= transpi_times)
+            cdatab <- data.frame(ids,slopes,transpi,transpi_times,transpi_lightPeriod)
+            cdatab <- cdatab[cdatab$ids >= first_point & cdatab$ids <= last_point,]
+            
+            dark_ids <- cdatab$ids[!cdatab$ids %in% transition_ids & cdatab$transpi_lightPeriod == "dark" & (cdatab$transpi < -max_dark | cdatab$transpi > -min_dark )]
+            light_ids <- cdatab$ids[!cdatab$ids %in% transition_ids & cdatab$transpi_lightPeriod == "light" & (cdatab$transpi < -max_light | cdatab$transpi > -min_light)]
+            obvious_outliers_final <- c(obvious_outliers_final,dark_ids,light_ids,transition_ids_outliers)
+          }
+          
         }
-        
       }
     }
+    
   }
   
   
