@@ -78,7 +78,7 @@ set_constants_C2M43B <- function ()
 
   # Start of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
   #from <- as.POSIXct("2018-04-11 10:00:00", tz ="UTC") # only day period available
-  from <- as.POSIXct("2018-04-12 08:00:00", tz ="UTC")
+  from <- as.POSIXct("2018-04-12 08:00:00", tz ="UTC") # data without the first day 
   
   # End of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
   #to <- as.POSIXct("2018-04-18 11:00:00", tz ="UTC") # the real end of the experiment
