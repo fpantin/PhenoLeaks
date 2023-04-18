@@ -77,10 +77,11 @@ set_constants_C2M43B <- function ()
   idExp <- "C2M43B"
 
   # Start of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
-  from <- as.POSIXct("2018-04-11 10:00:00", tz ="UTC")
+  #from <- as.POSIXct("2018-04-11 10:00:00", tz ="UTC") # only day period available
+  from <- as.POSIXct("2018-04-12 08:00:00", tz ="UTC")
   
   # End of the gravimetric experiment (YYYY-MM-DD HH:MM:SS)
-  # to <- as.POSIXct("2018-04-18 11:00:00", tz ="UTC") # the real end of the experiment
+  #to <- as.POSIXct("2018-04-18 11:00:00", tz ="UTC") # the real end of the experiment
   to <- as.POSIXct("2018-04-17 15:10:00", tz ="UTC") # the anticipated end before VPD problem
   
   # Duration of the photoperiod (h)
@@ -160,14 +161,14 @@ set_colors_C2M43B <- function ()
   ColorsTrt$Trt <- paste(ColorsTrt$idGenotype, ColorsTrt$idWatering, sep = " - ")
 
   
-  t1 <- c(-2, 3, 4, 5)
-  t2 <- c(3, 4, 5, 6)
-  ColorsPeriod <- data.frame(idPeriod = c("Control", "Low light 1", "Low light 2", "Low light 3"),
+  t1 <- c(-1, 3, 4)
+  t2 <- c(3, 4, 4.5)
+  ColorsPeriod <- data.frame(idPeriod = c("Control", "Low light 1", "Low light 2"),
                              Time1 = t1,
                              Time2 = t2,
                              decimalDay1 = Time_ON0 + t1,
                              decimalDay2 = Time_ON0 + t2,
-                             col = c("black", "burlywood4", "burlywood4", "burlywood4"))
+                             col = c("black", "burlywood4", "burlywood4"))
   
   
   return (list(ColorsTrt = ColorsTrt, ColorsPeriod = ColorsPeriod))
@@ -191,12 +192,15 @@ if (file.exists(irrig_file))
   
   # Check the number of irrigation events for each pot
   aggregate(list(N = irrig$decimalDay), by = list(idPot = irrig$idPot), FUN = length)
-  # --> All pots have 2 irrigation events except pot 123 where only one is detected (the second one is not because too many missing values before)
-  # Assign an "empty" irrigation event to this pot:
-  irrig <- rbind(irrig,
-                 data.frame(idPot = 123, weight_before = NA, weight_after = NA, predicted_water_add = NA, from_id = NA, decimalDay = NA, note = NA))
-  aggregate(list(N = irrig$decimalDay), by = list(idPot = irrig$idPot), FUN = length)
-  # --> OK
+  # --> All pots have 1 irrigation event
+  
+  # If start of the experiment is set earlier to get the previous day period only, need to uncomment the following lines:
+  # # --> All pots have 2 irrigation events except pot 123 where only one is detected (the second one is not because too many missing values before)
+  # # Assign an "empty" irrigation event to this pot:
+  # irrig <- rbind(irrig,
+  #                data.frame(idPot = 123, weight_before = NA, weight_after = NA, predicted_water_add = NA, from_id = NA, decimalDay = NA, note = NA))
+  # aggregate(list(N = irrig$decimalDay), by = list(idPot = irrig$idPot), FUN = length)
+  # # --> OK
   
   # Get the mean time of each irrigation event
   irrig$event <- NA
@@ -206,8 +210,9 @@ if (file.exists(irrig_file))
     }
   mean_irrig_time <- aggregate(list(MeanTime = irrig$decimalDay), by = list(event = irrig$event), FUN = mean, na.rm = T)
   
-  # Replace the NA by the mean time of the second irrigation event for pot 123 (that will be removed anyway due to erratic data):
-  irrig$decimalDay[nrow(irrig)] <- mean_irrig_time$MeanTime[2]
+  # If start of the experiment is set earlier to get the previous day period only, need to uncomment the following lines:
+  # # Replace the NA by the mean time of the second irrigation event for pot 123 (that will be removed anyway due to erratic data):
+  # irrig$decimalDay[nrow(irrig)] <- mean_irrig_time$MeanTime[2]
   }
 
 
