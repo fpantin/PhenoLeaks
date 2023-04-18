@@ -563,7 +563,7 @@ transpi$SWC <- 0
 for (i in 1:nrow(transpi)){
   # i = 2
   id = transpi$idPot[i]
-  transpi$SWC[i] <- mean(df$SWC[df$idPot == id & df$decimalDay > transpi$min_decimalDay[i] & df$decimalDay < transpi$max_decimalDay[i]]) 
+  transpi$SWC[i] <- mean(df$SWC[df$idPot == id & df$decimalDay >= transpi$min_decimalDay[i] & df$decimalDay <= transpi$max_decimalDay[i]], na.rm = T) 
 }
 
 
@@ -573,7 +573,7 @@ for (i in 1:nrow(transpi)){
 #------------------------------------------------------------------------------#
 
 # Format the dataframe with a uniform time sequence for all pots that starts at 0 at Time_ON0
-df <- format_time(transpi, Time_var = "decimalDay", Trt_var = c("idGenotype", "idWatering"), time_step = 30)
+transpi <- format_time(transpi, Time_var = "decimalDay", Trt_var = c("idGenotype", "idWatering"), time_step = 30)
 
 ## New version of the graphs (with soil water content and VPD)
 pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01d_transpiration_all_pots.pdf", sep = "_")), width = 10, height = 5)
@@ -584,7 +584,7 @@ for (irr in c("WW", "WS"))
     idpots <- genolist$idPot[genolist$idWatering == irr & genolist$idGenotype == geno]
     for (pot in sort(idpots))
       {
-      dat <- df[df$idPot == pot, ]
+      dat <- transpi[transpi$idPot == pot, ]
       prepare_kin(dat, use_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
                   main = paste(geno, " - ", irr, " - Pot ", pot, sep = ""),
                   inside = F, irrig_show_mode = "pot", pot = pot,
@@ -606,24 +606,24 @@ for (irr in c("WW", "WS"))
     {
     idpots <- genolist$idPot[genolist$idGenotype == geno]
     
-    df.geno <- df[df$idWatering == irr & df$idGenotype == geno, ]
-    prepare_kin(df.geno, use_VPD = T, add_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
+    transpi.geno <- transpi[transpi$idWatering == irr & transpi$idGenotype == geno, ]
+    prepare_kin(transpi.geno, use_VPD = T, add_VPD = T, Time_var = "Time", E_var = "E_mmol_per_m2_s_kPa",
                 ylim = c(-0.5, 4),
                 main = paste(geno, irr, sep = " - "),
                 inside = F, irrig_show_mode = "mean")
     color = 0
-    for (pot in sort(unique(df.geno$idPot)))
+    for (pot in sort(unique(transpi.geno$idPot)))
       {
       #require(scales)
       color <- color + 1
-      dat <- df[df$idPot == pot, ]
+      dat <- transpi[transpi$idPot == pot, ]
       points(E_mmol_per_m2_s_kPa ~ Time, data = dat, type = "o", col = hue_pal()(n.max)[color], cex = 0.5)
       rm(dat)
       }
     legend("top", ncol = 4, bty = "n",
-           legend = paste("Pot ", sort(unique(df.geno$idPot[df.geno$idGenotype == geno]))),
+           legend = paste("Pot ", sort(unique(transpi.geno$idPot[transpi.geno$idGenotype == geno]))),
            col = hue_pal()(n.max)[1:color], lty = 1, pch = 21, pt.cex = 0.5)
-    rm(df.geno)
+    rm(transpi.geno)
     }
   }
 
@@ -633,7 +633,7 @@ dev.off()
 
 # save output transpiration
 p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "pot_transpiration.csv", sep = "_"))
-write.csv(df,p2f,row.names = F)
+write.csv(transpi,p2f,row.names = F)
 
 # cleaned gravimetrical data
 p2f <- file.path(dir_Exp, "Processed_data", paste(idExp, "cleaned_gravi_data.csv", sep = "_"))
