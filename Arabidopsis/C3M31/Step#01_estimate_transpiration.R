@@ -277,12 +277,11 @@ output <- Rehy_Corr_v4(input = grv,gap = 1,jumps="positive")
 df_rehy <- output$output # corrected output
 corr1 <- output$corr1 # 1 run: detected rehydrations
 
-x = c(grv$decimalDay,df_rehy$decimalDay)
-y = c(grv$weight,df_rehy$Weight_corr)
-xlim = range(x)
-ylim = range(y)
-
 ## AJW old version
+# x = c(grv$decimalDay,df_rehy$decimalDay)
+# y = c(grv$weight,df_rehy$Weight_corr)
+# xlim = range(x)
+# ylim = range(y)
 # pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_irrigation.pdf", sep = "_")), width = 10, height = 10)
 # for (i in genolist$idPot){
 #   # i = idpots[3]

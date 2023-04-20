@@ -279,12 +279,11 @@ stopifnot(dim(corr1)[1] == 263)
 # points(weight~decimalDay, data = df_rehy[df_rehy$idPot=="321",],  col = "black")
 # legend("topright",legend="corrected weight after irrigation",fill="red")
 
-x = c(grv$decimalDay,df_rehy$decimalDay)
-y = c(grv$weight,df_rehy$Weight_corr)
-xlim = range(x)
-ylim = range(y)
-
 ## AJW old version
+# x = c(grv$decimalDay,df_rehy$decimalDay)
+# y = c(grv$weight,df_rehy$Weight_corr)
+# xlim = range(x)
+# ylim = range(y)
 # pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#01_correct_irrigation.pdf", sep = "_")), width = 10, height = 10)
 # for (i in genolist$idPot){
 #   # i = idpots[3]
