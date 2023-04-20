@@ -448,16 +448,8 @@ dfE_v7 <- Transpi_calc_v7(input = input, freq = 30, min_around = 90, lightsOFF =
 
 # add surface
 dfE_v7$surface = NA
-if(idExp %in% c("C2M43A","C3M31")){
-  # if in the list, than use the previous way to calculate the surface per transpiration timepoint
-  # attention: this method gives variable transpiration even when the initial non-corrected transpiration is equal because at every point the surface is different
-  dfE_v7 <- surface_add(input=dfE_v7)
-}else{
-  # calculate based on the mean surface of the points used to calculate the transpiration (this is )
-  for (i in 1:nrow(dfE_v7)){
-    # i = 133
-    dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay > dfE_v7$min_decimalDay[i] & grv$decimalDay < dfE_v7$max_decimalDay[i]])
-  }
+for (i in 1:nrow(dfE_v7)){
+  dfE_v7$surface[i] = mean(grv$surface[grv$idPot == dfE_v7$idPot[i] & grv$decimalDay > dfE_v7$min_decimalDay[i] & grv$decimalDay < dfE_v7$max_decimalDay[i]])
 }
 
 
