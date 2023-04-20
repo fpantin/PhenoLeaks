@@ -582,7 +582,7 @@ for (geno in sort(unique(transpi$idGenotype)))
     rm(dat)
     }
   legend("top", ncol = 4, bty = "n",
-         legend = paste("Pot ", sort(unique(transpi.geno$idPot[transpi.geno$idGenotype == geno]))),
+         legend = paste("Pot ", sort(unique(transpi.geno$idPot[transpi.geno$idGenotype == geno])), sep = ""),
          col = hue_pal()(n.max)[1:color], lty = 1, pch = 21, pt.cex = 0.5)
   rm(transpi.geno)
   }
