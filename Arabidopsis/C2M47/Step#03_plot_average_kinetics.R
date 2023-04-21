@@ -307,11 +307,11 @@ graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_pgi.ppt
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "amy3-2 bam1 - WW"), text.legend = c("Col-0", expression(italic("amy3 bam1"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_x_axis = F, draw_rect_env = F)
-graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_amy3 bam1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_amy3bam1.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)
 plot_avg_kin(Tr.avg, c("Col-0 - WW", "bam1bam3 - WW"), text.legend = c("Col-0", expression(italic("bam1 bam3"))), idExperiment = idExp, xlim = XLIM, ylim = YLIM, export_PPTX = T, draw_rect_env = F)
-graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_bam1 bam3.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
+graph2ppt(file = file.path(dir_Exp, "Figures", "PPTX", paste(idExp, "kin_bam1bam3.pptx", sep = "_")), paper = "A4", orient = "portrait", width = wd, height = ht)
 dev.off()
 
 dev.new(width = wd, height = ht, unit = "in", noRStudioGD = T)

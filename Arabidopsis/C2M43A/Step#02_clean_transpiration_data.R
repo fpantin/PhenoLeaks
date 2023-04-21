@@ -25,22 +25,6 @@
 
 
 
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
-#                                                                              #
-#                                     WARNING                                  #
-#                                                                              #
-# This script may generate the error:                                          #
-#                                                                              #
-#         Error in `stat_poly_line()`                                          #
-#                                                                              #
-# if run just after Step#01 (unknown reason).                                  #
-# If this happens, just restart the session (Ctrl + Shift + F10 in RStudio)    #
-# and run the script again.                                                    #
-#                                                                              #
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
-
-
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                                                              #
 #                              (1)  Load libraries                             #
@@ -250,7 +234,9 @@ df <- estim_transitions(df,
 # Check that the estimation is correct based on non-missing data
 #require(ggplot2)
 #require(ggpmisc)
-  
+
+options(warn = 0)  
+
 pdf(file.path(dir_Exp, "Figures", paste(idExp, "Step#02b_check_transition_estimates.pdf", sep = "_")), width = 8, height = 5)
 
 maxi <- max(c(df$E_clean_per_kPa[!is.na(df$E_estimate_per_kPa)], df$E_estimate_per_kPa), na.rm = T)
