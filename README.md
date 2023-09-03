@@ -9,4 +9,4 @@ Code contributed by Adrianus J. Westgeest & Florent Pantin
 
 Please cite the following paper when referring to this software:
 
-Westgeest AJ, Dauzat M, Simonneau T, Pantin F (2023) Leaf starch metabolism sets the phase of stomatal rhythm. The Plant Cell 35(9): 3444–3469. https://doi.org/10.1093/plcell/koad158
+Westgeest AJ, Dauzat M, Simonneau T, Pantin F (2023) Leaf starch metabolism sets the phase of stomatal rhythm. *The Plant Cell* 35(9): 3444–3469. https://doi.org/10.1093/plcell/koad158
